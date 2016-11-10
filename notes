@@ -1,0 +1,19 @@
+all units - circles, distance between center
+
+world parameters:
+  x, y (0.0, 0.0) - top left; (4000.0, 4000.0) - bottom right
+  max tick count = 20000
+
+constrains for strategy:
+  max tick calculus = 5000 ms
+  max game calculus = 20 x game ticks + 5000 ms (30 super)
+  max proccessor    = 10 x game ticks + 5000 ms (20 super)
+  memory = 256 Mb
+
+units:
+  wizard  :
+  missle  :   MAGIC_MISSILE, FROST_BOLT, FIREBALL, DART
+  bonus   :   EMPOWER, HASTE, SHIELD
+  building:   FACTION_BASE, GUARDIAN_TOWER
+  minion  :   ORC_WOODCUTTER, FETISH_BLOWDART
+  tree    :
