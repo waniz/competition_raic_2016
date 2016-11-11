@@ -1,0 +1,25 @@
+strategy v0.1:
+  1. move to top line with creeps
+      - go to the top tower T-1
+      - wait creeps
+      - attack enemy creeps
+      - if no friendly creeps close, back to T-1
+  2. soak exp with minions (attack)
+      - if fireball active:
+        - attack enemies if they are in range of blow
+      - attack with energy missle
+      - attack with stuff
+  3. check if low hp
+  4. check if an enemy nearby in the sight
+  5. attack enemy tower
+  6. attack enemy base
+  7. check my hp level
+  8. attack with different skills
+
+strategy v0.2
+
+
+strategy v0.3
+
+
+strategy v0.4
