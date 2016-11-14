@@ -34,11 +34,11 @@ class MyStrategy:
 
     def move(self, me: Wizard, world: World, game: Game, move: Move):
         self.initialize_strategy(game)
-        self.initialize_tick(world, game, me, move)
+        self.initialize_tick(world=world, game=game, me=me)
 
         # --- add strafe_speed for dodge
         if self.me.life < self.me.max_life * self.LOW_HP_FACTOR:
-            self.goto(self.get_previous_waypoint())
+            self.goto(self.get_previous_waypoint(), move)
 
         nearest_target = self.get_nearest_target()
         if nearest_target:
@@ -50,7 +50,9 @@ class MyStrategy:
                     move.action = ActionType.MAGIC_MISSILE
                     move.cast_angle = angle
                     move.min_cast_distance = distance - nearest_target.radius + game.magic_missile_radius
-        self.goto(self.get_next_waypoint())
+
+        self.goto(self.get_next_waypoint(), move)
+
 
     # ------ helper functions ---------------------------------------
     def initialize_strategy(self, game):
@@ -72,40 +74,41 @@ class MyStrategy:
 
         self.lane = LaneType.TOP
 
-    def initialize_tick(self, world, game, me, move):
+    def initialize_tick(self, world, game, me):
         self.world = world
         self.game = game
         self.me = me
-        self.move = move
 
     def get_next_waypoint(self):
         last_waypoint_index = len(self.waypoints) - 1
         last_waypoint = self.waypoints[last_waypoint_index]
 
-        for waypoint_index in range(0, last_waypoint_index):
+        for waypoint_index in range(0, last_waypoint_index - 1):
             waypoint = self.waypoints[waypoint_index]
 
-            if self.me.get_distance_to(waypoint) <= self.WAYPOINT_RADIUS:
-                return waypoint[waypoint_index + 1]
-            if math.hypot(waypoint[0] - last_waypoint[0], waypoint[1] - last_waypoint[1]) < self.me.get_distance_to(last_waypoint):
+            if self.me.get_distance_to(waypoint[0], waypoint[1]) <= self.WAYPOINT_RADIUS:
+                return self.waypoints[waypoint_index + 1]
+            if math.hypot(waypoint[0] - last_waypoint[0], waypoint[1] - last_waypoint[1]) < self.me.get_distance_to(
+                                                          last_waypoint[0], last_waypoint[1]):
                 return waypoint
 
     def get_previous_waypoint(self):
         first_waypoint = self.waypoints[0]
         for waypoint_index in range(len(self.waypoints) - 1, 0, -1):
             waypoint = self.waypoints[waypoint_index]
-            if self.me.get_distance_to(waypoint) <= self.WAYPOINT_RADIUS:
+            if self.me.get_distance_to(waypoint[0], waypoint[1]) <= self.WAYPOINT_RADIUS:
                 return self.waypoints[waypoint_index - 1]
-            if math.hypot(waypoint[0] - first_waypoint[0], waypoint[1] - first_waypoint[1]) < self.me.get_distance_to(first_waypoint):
+            if math.hypot(waypoint[0] - first_waypoint[0], waypoint[1] - first_waypoint[1]) < self.me.get_distance_to(
+                                                           first_waypoint[0], first_waypoint[1]):
                 return waypoint
 
-    def goto(self, waypoint):
+    def goto(self, waypoint, move):
         angle = self.me.get_angle_to(waypoint[0], waypoint[1])
 
-        self.move.turn(angle)
+        move.turn = angle
 
         if abs(angle) < self.game.staff_sector / 4:
-            self.move.speed = self.game.wizard_forward_speed
+            move.speed = self.game.wizard_forward_speed
 
     def get_nearest_target(self):
         targets = []
@@ -128,38 +131,4 @@ class MyStrategy:
                 nearest_target_distance = distance
         return nearest_target
 
-    # @staticmethod
-    # def goto_farm_place(me, world, game):
-    #     print('Function: goto_farm_place')
-    #     building_list = []
-    #     for building in world.buildings:
-    #         building_list.append([building.x, building.y])
-    #         print('Building coordinates: x: %s, y: %s. Building type: %s' % (building.x, building.y, building.type))
-    #
-    #     if me.faction == Faction.ACADEMY:
-    #         target_location_t2 = {'x': 50, 'y': 2693}
-    #         target_location_t1 = {'x': 350, 'y': 1656}
-    #
-    # @staticmethod
-    # def get_top_tower_t1_coords(me, world):
-    #     print('Function: get_top_tower_t1_coords')
-    #     building_list = []
-    #     print('My fraction: %s' % me.faction)
-    #     for building in world.buildings:
-    #         building_list.append([building.x, building.y])
-    #         print('Building coordinates: x: %s, y: %s. Building type: %s' % (building.x, building.y, building.type))
-    #
-    #     t1_tower = {'x': building_list[0][0], 'y': building_list[0][1]}
-    #     if me.faction == Faction.ACADEMY:
-    #         for pos in range(1, len(building_list)):
-    #             if t1_tower['y'] > building_list[pos][1]:
-    #                 t1_tower['x'], t1_tower['y'] = building_list[pos][0], building_list[pos][1]
-    #     elif me.faction == Faction.RENEGADES:
-    #         for pos in range(1, len(building_list)):
-    #             if t1_tower['x'] > building_list[pos][0]:
-    #                 t1_tower['x'], t1_tower['y'] = building_list[pos][0], building_list[pos][1]
-    #
-    #     print('T1 tower is : x %s, y %s' % (t1_tower['x'], t1_tower['y']))
-    #     print('')
-    #     return t1_tower
 
