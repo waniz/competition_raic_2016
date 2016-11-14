@@ -6,6 +6,7 @@ from model.BonusType import BonusType
 from model.Faction import Faction
 from model.Game import Game
 from model.LaneType import LaneType
+from model.LivingUnit import LivingUnit
 from model.Minion import Minion
 from model.MinionType import MinionType
 from model.Move import Move
@@ -18,9 +19,11 @@ from model.Wizard import Wizard
 from model.World import World
 
 import random
+import math
 
 
 class MyStrategy:
+
     # constants section
     WAYPOINT_RADIUS = 100
     LOW_HP_FACTOR = 0.25
@@ -33,19 +36,26 @@ class MyStrategy:
         self.initialize_strategy(game)
         self.initialize_tick(world, game, me, move)
 
-        # add strafe_speed
+        # --- add strafe_speed for dodge
         if self.me.life < self.me.max_life * self.LOW_HP_FACTOR:
             self.goto(self.get_previous_waypoint())
 
-
-
-
+        nearest_target = self.get_nearest_target()
+        if nearest_target:
+            distance = self.me.get_distance_to(nearest_target.x, nearest_target.y)
+            if distance <= self.me.cast_range:
+                angle = self.me.get_angle_to(nearest_target.x, nearest_target.y)
+                move.turn = angle
+                if abs(angle) < game.staff_sector / 2:
+                    move.action = ActionType.MAGIC_MISSILE
+                    move.cast_angle = angle
+                    move.min_cast_distance = distance - nearest_target.radius + game.magic_missile_radius
+        self.goto(self.get_next_waypoint())
 
     # ------ helper functions ---------------------------------------
     def initialize_strategy(self, game):
         random.seed(game.random_seed)
         map_size = game.map_size
-        print('Map size %s' % map_size)
 
         # TOP lane waypoints
         self.waypoints.append([100, map_size - 100])
@@ -59,8 +69,6 @@ class MyStrategy:
         self.waypoints.append([map_size * 0.5, 200])
         self.waypoints.append([map_size * 0.75, 200])
         self.waypoints.append([map_size - 200, 200])
-        print('Waypoints')
-        print(self.waypoints)
 
         self.lane = LaneType.TOP
 
@@ -79,7 +87,7 @@ class MyStrategy:
 
             if self.me.get_distance_to(waypoint) <= self.WAYPOINT_RADIUS:
                 return waypoint[waypoint_index + 1]
-            if last_waypoint.get_distance_to(waypoint) < self.me.get_distance_to(last_waypoint): # 1!!
+            if math.hypot(waypoint[0] - last_waypoint[0], waypoint[1] - last_waypoint[1]) < self.me.get_distance_to(last_waypoint):
                 return waypoint
 
     def get_previous_waypoint(self):
@@ -88,7 +96,7 @@ class MyStrategy:
             waypoint = self.waypoints[waypoint_index]
             if self.me.get_distance_to(waypoint) <= self.WAYPOINT_RADIUS:
                 return self.waypoints[waypoint_index - 1]
-            if first_waypoint.get_distance_to(first_waypoint) < self.me.get_distance_to(first_waypoint): # 1!!
+            if math.hypot(waypoint[0] - first_waypoint[0], waypoint[1] - first_waypoint[1]) < self.me.get_distance_to(first_waypoint):
                 return waypoint
 
     def goto(self, waypoint):
@@ -99,6 +107,26 @@ class MyStrategy:
         if abs(angle) < self.game.staff_sector / 4:
             self.move.speed = self.game.wizard_forward_speed
 
+    def get_nearest_target(self):
+        targets = []
+        for position in self.world.buildings:
+            targets.append(position)
+        for position in self.world.wizards:
+            targets.append(position)
+        for position in self.world.minions:
+            targets.append(position)
+
+        nearest_target = None
+        nearest_target_distance = 6000
+
+        for target in targets:
+            if target.faction == Faction.NEUTRAL or target.faction == self.me.faction:
+                continue
+            distance = self.me.get_distance_to(target.x, target.y)
+            if distance < nearest_target_distance:
+                nearest_target = target
+                nearest_target_distance = distance
+        return nearest_target
 
     # @staticmethod
     # def goto_farm_place(me, world, game):
@@ -111,11 +139,6 @@ class MyStrategy:
     #     if me.faction == Faction.ACADEMY:
     #         target_location_t2 = {'x': 50, 'y': 2693}
     #         target_location_t1 = {'x': 350, 'y': 1656}
-    #
-    #
-    #
-    #
-    #
     #
     # @staticmethod
     # def get_top_tower_t1_coords(me, world):
