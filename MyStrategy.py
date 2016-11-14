@@ -53,7 +53,6 @@ class MyStrategy:
 
         self.goto(self.get_next_waypoint(), move)
 
-
     # ------ helper functions ---------------------------------------
     def initialize_strategy(self, game):
         random.seed(game.random_seed)
@@ -104,9 +103,7 @@ class MyStrategy:
 
     def goto(self, waypoint, move):
         angle = self.me.get_angle_to(waypoint[0], waypoint[1])
-
         move.turn = angle
-
         if abs(angle) < self.game.staff_sector / 4:
             move.speed = self.game.wizard_forward_speed
 
@@ -121,7 +118,6 @@ class MyStrategy:
 
         nearest_target = None
         nearest_target_distance = 6000
-
         for target in targets:
             if target.faction == Faction.NEUTRAL or target.faction == self.me.faction:
                 continue
