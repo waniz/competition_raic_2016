@@ -1,25 +1,27 @@
-strategy v0.1:
-  1. move to top line with creeps
-      - go to the top tower T-1
-      - wait creeps
+strategy v0.1:  Complete!
+  +1. move to top line with creeps
       - attack enemy creeps
-      - if no friendly creeps close, back to T-1
-  2. soak exp with minions (attack)
-      - if fireball active:
-        - attack enemies if they are in range of blow
+  +2. soak exp with minions (attack)
       - attack with energy missle
       - attack with stuff
-  3. check if low hp
-  4. check if an enemy nearby in the sight
-  5. attack enemy tower
-  6. attack enemy base
-  7. check my hp level
-  8. attack with different skills
+  +3. check if low hp
+  +4. check if an enemy nearby in the sight
+  +5. attack enemy tower
+  +6. attack enemy base
+  +7. check my hp level
 
-strategy v0.2
+strategy v0.2:
+  +1. vivid path script
+  +2. back if enemies here
+    - only enemy minions
+    - enemy wizards > ally
+    - tower damage on me, ally minions close
 
+strategy v0.3:
+  1. stuck with another wizard for exp boost +67%
+  2. dodge
+  3. switch to player enemies if in range of attacks
+  4. check if stuck
+  5. wait for minion wave
 
-strategy v0.3
-
-
-strategy v0.4
+strategy v0.4:
