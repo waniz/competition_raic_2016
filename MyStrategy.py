@@ -22,6 +22,46 @@ import random
 import math
 
 
+class IndirectedGraph:
+
+    def __init__(self):
+        self.__adjacent = {}
+        self.__vertex_count = 0
+        self.__edges_count = 0
+
+    def add_connection(self, source, destination):
+        if source in self.__adjacent:
+            self.__adjacent[source].append(destination)
+        else:
+            self.__adjacent[source] = [destination]
+            self.__vertex_count += 1
+
+        if destination in self.__adjacent:
+            self.__adjacent[destination].append(source)
+        else:
+            self.__adjacent[destination] = [source]
+            self.__vertex_count += 1
+        self.__edges_count += 1
+
+    def adjacent_nodes(self, source):
+        return set(self.__adjacent[source])
+
+    def vertex_count(self):
+        return self.__vertex_count
+
+    def edges_count(self):
+        return self.__edges_count
+
+    def vertex_degree(self, source):
+        if source in self.__adjacent:
+            return len(self.__adjacent[source])
+        else:
+            return None
+
+    def vertexes(self):
+        return self.__adjacent.keys()
+
+
 class MyStrategy:
     # initials
     me = None
@@ -31,10 +71,11 @@ class MyStrategy:
 
     # constants section
     WAYPOINT_RADIUS = 50
-    LOW_HP_FACTOR = 0.7
+    LOW_HP_FACTOR = 0.37
     ENEMY_RANGE = 700
     ALLY_RANGE = 500
-    LOW_HP_ENEMY_SWITCH = 12 * 3
+    LOW_HP_ENEMY_SWITCH = 12 * 3  # 12 - wizard_damage
+    PATH_FINDING_GRID = 35 * 10    # 35 - wizard_radius
 
     # get modules initialised
     lane = LaneType()
@@ -45,11 +86,6 @@ class MyStrategy:
     def move(self, me: Wizard, world: World, game: Game, move: Move):
         self.initialize_strategy(game, me)
         self.initialize_tick(world=world, game=game, me=me, move=move)
-
-        # print(self.game.wizard_strafe_speed)    # 3.0
-        # print(self.game.wizard_backward_speed)  # 3.0
-        # print(self.game.wizard_forward_speed)   # 4.0
-        # print(self.game.wizard_vision_range)    # 600.0
 
         # add strafe_speed for dodge
         # move.strafe_speed = random.uniform(-game.wizard_strafe_speed, game.wizard_strafe_speed)
@@ -96,7 +132,6 @@ class MyStrategy:
                 if nearest_target:
                     distance = self.me.get_distance_to(nearest_target.x, nearest_target.y)
                     if distance <= self.me.cast_range:
-                        print('I am attacking!')
                         angle = self.me.get_angle_to(nearest_target.x, nearest_target.y)
                         move.turn = angle
                         if abs(angle) < game.staff_sector / 2:
@@ -116,24 +151,38 @@ class MyStrategy:
             self.waypoints.append([100, map_size - 400])
             self.waypoints.append([200, map_size - 800])
             self.waypoints.append([200, map_size * 0.75])
+            self.waypoints.append([200, map_size * 0.625])
             self.waypoints.append([200, map_size * 0.5])
+            self.waypoints.append([200, map_size * 0.375])
             self.waypoints.append([200, map_size * 0.25])
+            self.waypoints.append([200, 600])
             self.waypoints.append([200, 200])
+            self.waypoints.append([600, 200])
             self.waypoints.append([map_size * 0.25, 200])
+            self.waypoints.append([map_size * 0.375, 200])
             self.waypoints.append([map_size * 0.5, 200])
-            self.waypoints.append([map_size * 0.75, 190])
+            self.waypoints.append([map_size * 0.625, 200])
+            self.waypoints.append([map_size * 0.75, 200])
+            self.waypoints.append([map_size - 700, 200])
             self.waypoints.append([map_size - 200, 200])
         elif me.faction == Faction.RENEGADES:
             self.waypoints.append([map_size - 100, 100])
             self.waypoints.append([map_size - 400, 100])
             self.waypoints.append([map_size - 800, 200])
             self.waypoints.append([map_size * 0.75, 200])
+            self.waypoints.append([map_size * 0.625, 200])
             self.waypoints.append([map_size * 0.5, 200])
+            self.waypoints.append([map_size * 0.375, 200])
             self.waypoints.append([map_size * 0.25, 200])
+            self.waypoints.append([600, 200])
             self.waypoints.append([200, 200])
+            self.waypoints.append([200, 600])
             self.waypoints.append([200, map_size * 0.25])
+            self.waypoints.append([200, map_size * 0.375])
             self.waypoints.append([200, map_size * 0.5])
+            self.waypoints.append([200, map_size * 0.625])
             self.waypoints.append([190, map_size * 0.75])
+            self.waypoints.append([190, map_size - 700])
             self.waypoints.append([200, map_size - 200])
         self.lane = LaneType.TOP
 
@@ -169,6 +218,8 @@ class MyStrategy:
                 return waypoint
 
     def goto(self, waypoint):
+        next_tick_position = self.path_finder(waypoint)
+
         angle = self.me.get_angle_to(waypoint[0], waypoint[1])
         self.move_.turn = angle
         if abs(angle) < self.game.staff_sector / 4:
@@ -249,6 +300,107 @@ class MyStrategy:
         else:
             return None
 
+    def get_obstacles_in_zone(self, range_xy):
+        obstacles, objects = [], []
+
+        for target in self.world.buildings:
+            objects.append(target)
+        for target in self.world.wizards:
+            objects.append(target)
+        for target in self.world.minions:
+            objects.append(target)
+        for target in self.world.trees:
+            objects.append(target)
+
+        for target in objects:
+            if (target.x > range_xy[0]) and (target.x < range_xy[1]):
+                if (target.y > range_xy[2]) and (target.y < range_xy[3]):
+                    if target.x != self.me.x:
+                        obstacles.append(target)
+        return obstacles
+
     # ------ heuristics functions ---------------------------------------
-    def path_finder(self):
-        pass
+    def path_finder(self, waypoint):
+        # wizard_radius         # 35
+        # faction_base_radius   # 100
+        # minion_radius         # 25
+        # guardian_tower_radius # 50
+        # tree radius           # 20 - 50
+        #
+        # wizard_strafe_speed   # 3.0
+        # wizard_backward_speed # 3.0
+        # wizard_forward_speed  # 4.0
+        # wizard_vision_range   # 600.0 distance between waypoint ~ 600.0
+
+        start = [self.me.x, self.me.y]         # x:200 y:1000
+        finish = [waypoint[0], waypoint[1]]      # x:200 y:600
+        # start = [200, 1000]
+        # finish = [200, 600]
+        graph = IndirectedGraph()
+
+        lb = [start[0] - self.PATH_FINDING_GRID, start[1] + self.PATH_FINDING_GRID]    # lb: x: -100 y: 1300
+        rb = [start[0] + self.PATH_FINDING_GRID, start[1] + self.PATH_FINDING_GRID]    # rb: x: 500 y: 1300
+        lt = [finish[0] - self.PATH_FINDING_GRID, finish[1] - self.PATH_FINDING_GRID]  # lt: x: -100 y: 300
+        rt = [finish[0] + self.PATH_FINDING_GRID, finish[1] - self.PATH_FINDING_GRID]  # lt: x: 500 y: 300
+
+        # filter if in map_size
+        if lb[0] <= 0:
+            lb[0] = 1
+        if lb[1] >= self.game.map_size:
+            lb[1] = self.game.map_size - 1
+        if rb[0] >= self.game.map_size:
+            rb[0] = self.game.map_size - 1
+        if rb[1] >= self.game.map_size:
+            rb[1] = self.game.map_size - 1
+        if lt[0] <= 0:
+            lt[0] = 1
+        if lt[1] <= 0:
+            lt[1] = 1
+        if rt[0] >= self.game.map_size:
+            rt[0] = self.game.map_size - 1
+        if rt[1] <= 0:
+            rt[1] = 1
+
+        # parameters:
+        # lb: x: 1 y: 1300  # rb: x: 500 y: 1300  # lt: x: 1 y: 300  # lt: x: 500 y: 300
+
+        step = self.game.wizard_radius
+        net_2d = []
+        x_count, y_count = 0, 0
+
+        for net_y in range(int(min(lt[1], rt[1]) + step), int(max(lb[1], rb[1]) - step), int(step)):
+            line_x = []
+            for net_x in range(int(min(lb[0], lt[0]) + step), int(max(rb[0], rt[0]) - step), int(step)):
+                line_x.append([net_x, net_y])
+            y_count += 1
+            x_count = len(line_x)
+            net_2d.append(line_x)
+
+        obstacles = self.get_obstacles_in_zone([
+            int(min(lb[0], lt[0]) + step), int(max(rb[0], rt[0]) - step),
+            int(min(lt[1], rt[1]) + step), int(max(lb[1], rb[1]) - step)])
+
+        for i in range(0, len(obstacles)):
+            print(obstacles[i].x, obstacles[i].y)
+        print(self.me.x, self.me.y)
+        print('')
+
+        return waypoint
+
+    @staticmethod
+    def bfs(graph, start, end):
+        if start not in graph.vertexes():
+            return None
+        visited_nodes, queue = set(), [start]
+        while queue:
+            path = queue.pop(0)
+            node = path[-1]
+            if node == end:
+                return path
+            elif node not in visited_nodes:
+                for adjacent in graph.adjacent_nodes(node):
+                    new_path = list(path)
+                    new_path.append(adjacent)
+                    queue.append(new_path)
+                visited_nodes.add(node)
+        return visited_nodes
