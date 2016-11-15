@@ -366,24 +366,52 @@ class MyStrategy:
 
         step = self.game.wizard_radius
         net_2d = []
-        x_count, y_count = 0, 0
 
-        for net_y in range(int(min(lt[1], rt[1]) + step), int(max(lb[1], rb[1]) - step), int(step)):
+        for net_y in range(int(min(lt[1], rt[1]) + step), int(max(lb[1], rb[1]) - step), int(step * 2)):
             line_x = []
-            for net_x in range(int(min(lb[0], lt[0]) + step), int(max(rb[0], rt[0]) - step), int(step)):
+            for net_x in range(int(min(lb[0], lt[0]) + step), int(max(rb[0], rt[0]) - step), int(step * 2)):
                 line_x.append([net_x, net_y])
-            y_count += 1
-            x_count = len(line_x)
             net_2d.append(line_x)
 
         obstacles = self.get_obstacles_in_zone([
             int(min(lb[0], lt[0]) + step), int(max(rb[0], rt[0]) - step),
             int(min(lt[1], rt[1]) + step), int(max(lb[1], rb[1]) - step)])
 
-        for i in range(0, len(obstacles)):
-            print(obstacles[i].x, obstacles[i].y)
-        print(self.me.x, self.me.y)
-        print('')
+        net_2d_name = []
+        rows_in_net = len(net_2d)
+        columns_in_net = len(net_2d[0])
+        for line_v in range(0, len(net_2d)):
+            net_2d_v = []
+            for line_h in range(0, len(net_2d[line_v])):
+                net_2d_v.append(line_v * 100 + line_h)
+            net_2d_name.append(net_2d_v)
+
+        # print(net_2d_name[0][0], net_2d_name[1][0], net_2d_name[0][1], net_2d_name[8][1])
+
+        for line_v in range(0, len(net_2d)):
+            for line_h in range(0, len(net_2d[line_v]) - 1):
+                if line_v == 2:
+                    print(net_2d_name[line_v][line_h], net_2d_name[line_v][line_h + 1])
+                    graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v][line_h + 1])
+                    print(graph.vertexes())
+                    print(graph.vertex_degree('200'))
+
+        # for line_v in range(0, len(net_2d) - 1):
+        #     for line_h in range(0, len(net_2d[line_v])):
+        #         graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v + 1][line_h])
+        #
+        # for line_v in range(0, len(net_2d) - 1):
+        #     for line_h in range(0, len(net_2d[line_v]) - 1):
+        #         graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v + 1][line_h + 1])
+        #
+        # for line_v in range(len(net_2d) - 1, 1, -1):
+        #     for line_h in range(len(net_2d[line_v]) - 1, 1, -1):
+        #         graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v - 1][line_h - 1])
+
+        # print(self.bfs(graph, '202', '203'))
+        print(graph.vertex_degree('202'), graph.vertex_degree('203'))
+
+        del graph
 
         return waypoint
 
