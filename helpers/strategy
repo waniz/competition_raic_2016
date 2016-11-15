@@ -19,11 +19,13 @@ strategy v0.2: Completed!
 
 strategy v0.3:
   1. path finder
-  +2. dodge
+  2. check if stuck
   +3. switch to player enemies if in range of attacks
-  4. check if stuck
-  5. wait for minion wave
-  +6. waypoints for second side TOP lane
+  +4. waypoints for second side TOP lane
 
 strategy v0.4:
   1. stuck with another wizard for exp boost +67%
+  2. wait for minion wave
+
+strategy v0.5
+  1. dodge if I am attacked
