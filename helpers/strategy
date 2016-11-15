@@ -1,4 +1,4 @@
-strategy v0.1:  Complete!
+strategy v0.1:  Completed!
   +1. move to top line with creeps
       - attack enemy creeps
   +2. soak exp with minions (attack)
@@ -10,7 +10,7 @@ strategy v0.1:  Complete!
   +6. attack enemy base
   +7. check my hp level
 
-strategy v0.2:
+strategy v0.2: Completed!
   +1. vivid path script
   +2. back if enemies here
     - only enemy minions
@@ -18,10 +18,12 @@ strategy v0.2:
     - tower damage on me, ally minions close
 
 strategy v0.3:
-  1. stuck with another wizard for exp boost +67%
-  2. dodge
-  3. switch to player enemies if in range of attacks
+  1. path finder
+  +2. dodge
+  +3. switch to player enemies if in range of attacks
   4. check if stuck
   5. wait for minion wave
+  +6. waypoints for second side TOP lane
 
 strategy v0.4:
+  1. stuck with another wizard for exp boost +67%

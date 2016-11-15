@@ -23,12 +23,17 @@ import math
 
 
 class MyStrategy:
+    # initials
+    me = None
+    world = None
+    game = None
 
     # constants section
     WAYPOINT_RADIUS = 50
     LOW_HP_FACTOR = 0.65
     ENEMY_RANGE = 700
     ALLY_RANGE = 500
+    LOW_HP_ENEMY_SWITCH = 12 * 3
 
     # get modules initialised
     lane = LaneType()
@@ -40,7 +45,11 @@ class MyStrategy:
         self.initialize_strategy(game)
         self.initialize_tick(world=world, game=game, me=me)
 
-        # --- add strafe_speed for dodge
+        # add strafe_speed for dodge
+        move.strafe_speed = random.randrange(-game.wizard_strafe_speed, game.wizard_strafe_speed,
+                                             step=game.wizard_strafe_speed / 10)
+
+        # low hp run back
         if self.me.life < self.me.max_life * self.LOW_HP_FACTOR:
             self.goto(self.get_previous_waypoint(), move)
 
@@ -59,24 +68,36 @@ class MyStrategy:
             print('')
 
         # {'minion': ally_minions, 'wizard': ally_wizards, 'building': ally_buildings}
-
-        if ally_in_range['minion'] == 0 and enemies_in_range['minion'] >= 1:
-            self.run_away = True
+        # TODO run away ??? modify if I can't run back then attack
+        if ally_in_range['minion'] == 0 and enemies_in_range['minion'] >= 2:
+            if self.me.life < self.LOW_HP_FACTOR:
+                self.run_away = True
         if (ally_in_range['wizard'] == 0 and ally_in_range['minion'] <= 1) and enemies_in_range['wizard'] > 2:
-            self.run_away = True
+            if self.me.life < self.LOW_HP_FACTOR:
+                self.run_away = True
         if ally_in_range['minion'] == 0 and enemies_in_range['building'] == 1:
-            self.run_away = True
+            if self.me.life < self.LOW_HP_FACTOR:
+                self.run_away = True
 
-        nearest_target = self.get_nearest_target()
-        if nearest_target and not self.run_away:
-            distance = self.me.get_distance_to(nearest_target.x, nearest_target.y)
-            if distance <= self.me.cast_range:
-                angle = self.me.get_angle_to(nearest_target.x, nearest_target.y)
-                move.turn = angle
-                if abs(angle) < game.staff_sector / 2:
-                    move.action = ActionType.MAGIC_MISSILE
-                    move.cast_angle = angle
-                    move.min_cast_distance = distance - nearest_target.radius + game.magic_missile_radius
+        # switch to enemy wizard
+        nearest_enemy_wizard = self.get_enemy_wizard_in_range()
+        if nearest_enemy_wizard:
+            nearest_target = nearest_enemy_wizard
+        else:
+            nearest_target = self.get_nearest_target()
+
+        if self.run_away:
+            self.goto(self.get_previous_waypoint(), move)
+        else:
+            if nearest_target:
+                distance = self.me.get_distance_to(nearest_target.x, nearest_target.y)
+                if distance <= self.me.cast_range:
+                    angle = self.me.get_angle_to(nearest_target.x, nearest_target.y)
+                    move.turn = angle
+                    if abs(angle) < game.staff_sector / 2:
+                        move.action = ActionType.MAGIC_MISSILE
+                        move.cast_angle = angle
+                        move.min_cast_distance = distance - nearest_target.radius + game.magic_missile_radius
 
         self.goto(self.get_next_waypoint(), move)
 
@@ -85,61 +106,118 @@ class MyStrategy:
         random.seed(game.random_seed)
         map_size = game.map_size
 
-        self.waypoints.append([100, map_size - 100])
-        self.waypoints.append([150, map_size - 500])
-        self.waypoints.append([160, map_size - 600])
-        self.waypoints.append([180, map_size - 700])
-        self.waypoints.append([200, map_size - 800])
-        self.waypoints.append([200, map_size - 900])
-        self.waypoints.append([210, map_size * 0.75])
-        self.waypoints.append([230, map_size * 0.7])
-        self.waypoints.append([240, map_size * 0.67])
-        self.waypoints.append([230, map_size * 0.625])
-        self.waypoints.append([220, map_size * 0.58])
-        self.waypoints.append([215, map_size * 0.55])
-        self.waypoints.append([200, map_size * 0.5])
-        self.waypoints.append([200, map_size * 0.45])
-        self.waypoints.append([200, map_size * 0.4])
-        self.waypoints.append([200, map_size * 0.35])
-        self.waypoints.append([200, map_size * 0.3])
-        self.waypoints.append([200, map_size * 0.25])
-        self.waypoints.append([200, 900])
-        self.waypoints.append([200, 800])
-        self.waypoints.append([200, 700])
-        self.waypoints.append([180, 600])
-        self.waypoints.append([200, 500])
-        self.waypoints.append([220, 400])
-        self.waypoints.append([190, 300])
-        self.waypoints.append([200, 200])
-        self.waypoints.append([300, 210])
-        self.waypoints.append([400, 190])
-        self.waypoints.append([500, 210])
-        self.waypoints.append([600, 190])
-        self.waypoints.append([700, 210])
-        self.waypoints.append([800, 190])
-        self.waypoints.append([900, 210])
-        self.waypoints.append([map_size * 0.25, 210])
-        self.waypoints.append([map_size * 0.28, 190])
-        self.waypoints.append([map_size * 0.31, 210])
-        self.waypoints.append([map_size * 0.34, 190])
-        self.waypoints.append([map_size * 0.37, 210])
-        self.waypoints.append([map_size * 0.4, 190])
-        self.waypoints.append([map_size * 0.43, 210])
-        self.waypoints.append([map_size * 0.47, 190])
-        self.waypoints.append([map_size * 0.53, 210])
-        self.waypoints.append([map_size * 0.56, 190])
-        self.waypoints.append([map_size * 0.59, 210])
-        self.waypoints.append([map_size * 0.62, 190])
-        self.waypoints.append([map_size * 0.65, 210])
-        self.waypoints.append([map_size * 0.68, 190])
-        self.waypoints.append([map_size * 0.71, 210])
-        self.waypoints.append([map_size * 0.75, 190])
-        self.waypoints.append([map_size - 900, 210])
-        self.waypoints.append([map_size - 800, 200])
-        self.waypoints.append([map_size - 700, 200])
-        self.waypoints.append([map_size - 600, 200])
-        self.waypoints.append([map_size - 500, 200])
-        self.waypoints.append([map_size - 100, 100])
+        if self.me.faction == Faction.ACADEMY:
+            self.waypoints.append([100, map_size - 100])
+            self.waypoints.append([150, map_size - 500])
+            self.waypoints.append([160, map_size - 600])
+            self.waypoints.append([180, map_size - 700])
+            self.waypoints.append([200, map_size - 800])
+            self.waypoints.append([200, map_size - 900])
+            self.waypoints.append([210, map_size * 0.75])
+            self.waypoints.append([230, map_size * 0.7])
+            self.waypoints.append([240, map_size * 0.67])
+            self.waypoints.append([230, map_size * 0.625])
+            self.waypoints.append([220, map_size * 0.58])
+            self.waypoints.append([215, map_size * 0.55])
+            self.waypoints.append([200, map_size * 0.5])
+            self.waypoints.append([200, map_size * 0.45])
+            self.waypoints.append([200, map_size * 0.4])
+            self.waypoints.append([200, map_size * 0.35])
+            self.waypoints.append([200, map_size * 0.3])
+            self.waypoints.append([200, map_size * 0.25])
+            self.waypoints.append([200, 900])
+            self.waypoints.append([200, 800])
+            self.waypoints.append([200, 700])
+            self.waypoints.append([180, 600])
+            self.waypoints.append([200, 500])
+            self.waypoints.append([220, 400])
+            self.waypoints.append([190, 300])
+            self.waypoints.append([200, 200])
+            self.waypoints.append([300, 210])
+            self.waypoints.append([400, 190])
+            self.waypoints.append([500, 210])
+            self.waypoints.append([600, 190])
+            self.waypoints.append([700, 210])
+            self.waypoints.append([800, 190])
+            self.waypoints.append([900, 210])
+            self.waypoints.append([map_size * 0.25, 210])
+            self.waypoints.append([map_size * 0.28, 190])
+            self.waypoints.append([map_size * 0.31, 210])
+            self.waypoints.append([map_size * 0.34, 190])
+            self.waypoints.append([map_size * 0.37, 210])
+            self.waypoints.append([map_size * 0.4, 190])
+            self.waypoints.append([map_size * 0.43, 210])
+            self.waypoints.append([map_size * 0.47, 190])
+            self.waypoints.append([map_size * 0.53, 210])
+            self.waypoints.append([map_size * 0.56, 190])
+            self.waypoints.append([map_size * 0.59, 210])
+            self.waypoints.append([map_size * 0.62, 190])
+            self.waypoints.append([map_size * 0.65, 210])
+            self.waypoints.append([map_size * 0.68, 190])
+            self.waypoints.append([map_size * 0.71, 210])
+            self.waypoints.append([map_size * 0.75, 190])
+            self.waypoints.append([map_size - 900, 210])
+            self.waypoints.append([map_size - 800, 200])
+            self.waypoints.append([map_size - 700, 200])
+            self.waypoints.append([map_size - 600, 200])
+            self.waypoints.append([map_size - 500, 200])
+            self.waypoints.append([map_size - 100, 100])
+        elif self.me.faction == Faction.RENEGADES:
+            self.waypoints.append([map_size - 100, 100])
+            self.waypoints.append([map_size - 500, 150])
+            self.waypoints.append([map_size - 600, 160])
+            self.waypoints.append([map_size - 700, 180])
+            self.waypoints.append([map_size - 800, 200])
+            self.waypoints.append([map_size - 900, 200])
+            self.waypoints.append([map_size * 0.75, 210])
+            self.waypoints.append([map_size * 0.7, 230])
+            self.waypoints.append([map_size * 0.67, 240])
+            self.waypoints.append([map_size * 0.625, 230])
+            self.waypoints.append([map_size * 0.58, 220])
+            self.waypoints.append([map_size * 0.55, 215])
+            self.waypoints.append([map_size * 0.5, 200])
+            self.waypoints.append([map_size * 0.45, 200])
+            self.waypoints.append([map_size * 0.4, 200])
+            self.waypoints.append([map_size * 0.35, 200])
+            self.waypoints.append([map_size * 0.3, 200])
+            self.waypoints.append([map_size * 0.25, 200])
+            self.waypoints.append([900, 200])
+            self.waypoints.append([800, 200])
+            self.waypoints.append([700, 200])
+            self.waypoints.append([600, 180])
+            self.waypoints.append([500, 200])
+            self.waypoints.append([400, 220])
+            self.waypoints.append([300, 190])
+            self.waypoints.append([200, 200])
+            self.waypoints.append([210, 300])
+            self.waypoints.append([190, 400])
+            self.waypoints.append([210, 500])
+            self.waypoints.append([190, 600])
+            self.waypoints.append([210, 700])
+            self.waypoints.append([190, 800])
+            self.waypoints.append([210, 900])
+            self.waypoints.append([210, map_size * 0.25])
+            self.waypoints.append([190, map_size * 0.28])
+            self.waypoints.append([210, map_size * 0.31])
+            self.waypoints.append([190, map_size * 0.34])
+            self.waypoints.append([210, map_size * 0.37])
+            self.waypoints.append([190, map_size * 0.4])
+            self.waypoints.append([210, map_size * 0.43])
+            self.waypoints.append([190, map_size * 0.47])
+            self.waypoints.append([210, map_size * 0.53])
+            self.waypoints.append([190, map_size * 0.56])
+            self.waypoints.append([210, map_size * 0.59])
+            self.waypoints.append([190, map_size * 0.62])
+            self.waypoints.append([210, map_size * 0.65])
+            self.waypoints.append([190, map_size * 0.68])
+            self.waypoints.append([210, map_size * 0.71])
+            self.waypoints.append([190, map_size * 0.75])
+            self.waypoints.append([210, map_size - 900])
+            self.waypoints.append([200, map_size - 800])
+            self.waypoints.append([200, map_size - 700])
+            self.waypoints.append([200, map_size - 600])
+            self.waypoints.append([200, map_size - 500])
+            self.waypoints.append([100, map_size - 100])
 
         self.lane = LaneType.TOP
 
@@ -208,7 +286,7 @@ class MyStrategy:
                 enemy_buildings.append(target)
 
         for target in self.world.wizards:
-            if target.faction == Faction.NEUTRAL or target.faction == self.me.faction:
+            if target.faction == self.me.faction:
                 continue
             if self.me.get_distance_to(target.x, target.y) <= self.ENEMY_RANGE:
                 enemy_wizards.append(target)
@@ -235,4 +313,25 @@ class MyStrategy:
                 ally_minions.append(target)
         return {'minion': ally_minions, 'wizard': ally_wizards, 'building': ally_buildings}
 
+    def get_enemy_wizard_in_range(self):
+        enemy_wizards = []
+        for target in self.world.wizards:
+            if target.faction == self.me.faction:
+                continue
+            if self.me.get_distance_to(target.x, target.y) <= self.ENEMY_RANGE:
+                enemy_wizards.append(target)
+        if len(enemy_wizards) > 0:
+            the_closest_enemy_wizard = enemy_wizards[0]
+            for enemy in enemy_wizards:
+                if self.me.get_distance_to(enemy.x, enemy.y) <= self.me.get_distance_to(the_closest_enemy_wizard.x, the_closest_enemy_wizard.y):
+                    the_closest_enemy_wizard = enemy
+            for enemy in enemy_wizards:
+                if enemy.hp < self.LOW_HP_ENEMY_SWITCH and self.me.get_distance_to(enemy.x, enemy.y) < self.game.wizard_cast_range:
+                    return enemy
+            return the_closest_enemy_wizard
+        else:
+            return None
 
+    # ------ heuristics functions ---------------------------------------
+    def path_finder(self):
+        pass
