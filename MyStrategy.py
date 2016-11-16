@@ -291,10 +291,12 @@ class MyStrategy:
         if len(enemy_wizards) > 0:
             the_closest_enemy_wizard = enemy_wizards[0]
             for enemy in enemy_wizards:
-                if self.me.get_distance_to(enemy.x, enemy.y) <= self.me.get_distance_to(the_closest_enemy_wizard.x, the_closest_enemy_wizard.y):
+                if self.me.get_distance_to(enemy.x, enemy.y) <= self.me.get_distance_to(the_closest_enemy_wizard.x,
+                                                                                        the_closest_enemy_wizard.y):
                     the_closest_enemy_wizard = enemy
             for enemy in enemy_wizards:
-                if enemy.life < self.LOW_HP_ENEMY_SWITCH and self.me.get_distance_to(enemy.x, enemy.y) < self.game.wizard_cast_range:
+                if enemy.life < self.LOW_HP_ENEMY_SWITCH and self.me.get_distance_to(enemy.x, enemy.y) < \
+                        self.game.wizard_cast_range:
                     return enemy
             return the_closest_enemy_wizard
         else:
@@ -391,44 +393,39 @@ class MyStrategy:
         for line_v in range(0, len(net_2d)):
             for line_h in range(0, len(net_2d[line_v]) - 1):
                 if line_v == 2:
-                    print(net_2d_name[line_v][line_h], net_2d_name[line_v][line_h + 1])
                     graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v][line_h + 1])
-                    print(graph.vertexes())
-                    print(graph.vertex_degree('200'))
 
-        # for line_v in range(0, len(net_2d) - 1):
-        #     for line_h in range(0, len(net_2d[line_v])):
-        #         graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v + 1][line_h])
-        #
-        # for line_v in range(0, len(net_2d) - 1):
-        #     for line_h in range(0, len(net_2d[line_v]) - 1):
-        #         graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v + 1][line_h + 1])
-        #
-        # for line_v in range(len(net_2d) - 1, 1, -1):
-        #     for line_h in range(len(net_2d[line_v]) - 1, 1, -1):
-        #         graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v - 1][line_h - 1])
+        for line_v in range(0, len(net_2d) - 1):
+            for line_h in range(0, len(net_2d[line_v])):
+                graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v + 1][line_h])
 
-        # print(self.bfs(graph, '202', '203'))
-        print(graph.vertex_degree('202'), graph.vertex_degree('203'))
+        for line_v in range(0, len(net_2d) - 1):
+            for line_h in range(0, len(net_2d[line_v]) - 1):
+                graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v + 1][line_h + 1])
+
+        for line_v in range(len(net_2d) - 1, 1, -1):
+            for line_h in range(len(net_2d[line_v]) - 1, 1, -1):
+                graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v - 1][line_h - 1])
+
+        print(self.bfs(graph_to_search=graph, start=101, end=405))
 
         del graph
-
         return waypoint
 
     @staticmethod
-    def bfs(graph, start, end):
-        if start not in graph.vertexes():
-            return None
-        visited_nodes, queue = set(), [start]
+    def bfs(graph_to_search, start, end):
+        queue = [[start]]
+        visited = set()
         while queue:
             path = queue.pop(0)
-            node = path[-1]
-            if node == end:
+            vertex = path[-1]
+            if vertex == end:
                 return path
-            elif node not in visited_nodes:
-                for adjacent in graph.adjacent_nodes(node):
+            elif vertex not in visited:
+                for current_neighbour in graph_to_search.adjacent_nodes(vertex):
                     new_path = list(path)
-                    new_path.append(adjacent)
+                    new_path.append(current_neighbour)
                     queue.append(new_path)
-                visited_nodes.add(node)
-        return visited_nodes
+                    if current_neighbour == end:
+                        return new_path
+                visited.add(vertex)
