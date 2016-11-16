@@ -27,21 +27,22 @@ strategy v0.3: Completed!
   +2. switch to player enemies if in range of attacks
   +3. waypoints for second side TOP lane
   +4. stuck fix at [200, 200]
-  5. add option for opposite side:
-      l: My place is x: 100.0, y: 3700.0 [100, 3900.0]
-         My place is x: 200.0, y: 3700.0 [100, 3900.0]
-      d: My place is x: 200.0, y: 3800.0 [3900.0, 100]
 
 strategy v0.4:
-  1. wait for minion wave
+  some tweaks in parameters (waypoints, waypoint_size)
+
+strategy v0.5:
+  !!1. wait for minion wave
   2. go back correctly if enjured
   3. substitude attack range,  visible range and close range
-  4. stop go forward if enemies in visible range
+  !!!4. stop go forward if enemies in visible range
   5. check missiles at me
   6. dodge left/right or top/bottom the missile
-  7. if attacked by minion move back
+  !17. if attacked by minion move back
+  +8. make an analisys of profits
+  9. bonus collection
 
-strategy v0.5
+strategy v0.6:
   1. stuck with another wizards for exp boost
   2. find where every ally go
   3. stick together

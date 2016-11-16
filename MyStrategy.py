@@ -70,13 +70,14 @@ class MyStrategy:
     move_ = None
 
     # constants section
-    WAYPOINT_RADIUS = 120
-    LOW_HP_FACTOR = 0.5
-    ENEMY_RANGE = 500
-    ALLY_RANGE = 500
+    WAYPOINT_RADIUS = 250
+    LOW_HP_FACTOR = 0.7
+    ATTACK_RANGE = 500
+    ALLY_RANGE = 600
     LOW_HP_ENEMY_SWITCH = 12 * 3   # 12 - wizard_damage
     PATH_FINDING_GRID = 35 * 10    # 35 - wizard_radius
     PATH_FINDING_CELL_RADIUS = 35  # x2
+    EVADE_DISTANCE = 500
 
     # get modules initialised
     lane = LaneType()
@@ -89,67 +90,79 @@ class MyStrategy:
         self.initialize_strategy(game, me)
         self.initialize_tick(world=world, game=game, me=me, move=move)
 
-        # add strafe_speed for dodge
-        # move.strafe_speed = random.uniform(-game.wizard_strafe_speed, game.wizard_strafe_speed)
+        # # dodge&evade
+        # if self.dodge_and_evade():
+        #     return None
 
         # low hp run back
         if self.me.life < self.me.max_life * self.LOW_HP_FACTOR:
+            print('go back - low hp: x: %s y: % s' % (self.me.x, self.me.y))
+            self.goto(self.get_previous_waypoint())
+            return None
+
+        # too close to enemies
+        if self.me.life < self.me.max_life * self.LOW_HP_FACTOR:
             print('go back - low hp')
             self.goto(self.get_previous_waypoint())
+            return None
+
+        enemies_in_range = self.get_enemies_in_attack_range()
+        ally_in_range = self.get_ally_in_shared_exp_range()
+
+        # some information provider section -----------------
+        if self.strategy_steps % 50 == 0:
+            print('My stats: hp %s of %s, score %s, coords: x %s y %s' % (me.life, me.max_life, me.xp, round(me.x, 2),
+                                                                          round(me.y, 2)))
+            print('Enemies: minion - %s, wizard - %s, building - %s' %
+                  (len(enemies_in_range['minion']), len(enemies_in_range['wizard']), len(enemies_in_range['building'])))
+            print('Ally: minion - %s, wizard - %s, building - %s' %
+                  (len(ally_in_range['minion']), len(ally_in_range['wizard']), len(ally_in_range['building'])))
+            print('Current strategy tick is %s' % self.strategy_steps)
+            print('')
+
+        # awareness of overpower
+        if ally_in_range['minion'] == 0 and enemies_in_range['minion'] >= 2:
+            if self.me.life < self.LOW_HP_FACTOR:
+                self.run_away = True
+        if (ally_in_range['wizard'] == 0 and ally_in_range['minion'] <= 1) and enemies_in_range['wizard'] > 2:
+            if self.me.life < self.LOW_HP_FACTOR:
+                self.run_away = True
+        if ally_in_range['minion'] == 0 and enemies_in_range['building'] == 1:
+            if self.me.life < self.LOW_HP_FACTOR:
+                self.run_away = True
+
+        # switch to close enemy
+        nearest_enemy_wizard = self.get_closest_or_with_low_hp_enemy_wizard_in_attack_range()
+        if nearest_enemy_wizard:
+            my_target = nearest_enemy_wizard
         else:
-            enemies_in_range = self.get_enemies_in_range()
-            ally_in_range = self.get_ally_in_range()
+            my_target = self.get_nearest_target_in_my_visible_range()
 
-            # some information provider section -----------------
-            if self.strategy_steps % 50 == 0:
-                print('My stats: hp %s of %s, score %s, coords: x %s y %s' % (me.life, me.max_life, me.xp, round(me.x, 2),
-                                                                              round(me.y, 2)))
-                print('Enemies: minion - %s, wizard - %s, building - %s' %
-                      (len(enemies_in_range['minion']), len(enemies_in_range['wizard']), len(enemies_in_range['building'])))
-                print('Ally: minion - %s, wizard - %s, building - %s' %
-                      (len(ally_in_range['minion']), len(ally_in_range['wizard']), len(ally_in_range['building'])))
-                print('Current strategy tick is %s' % self.strategy_steps)
-                print('')
+        # action loop
+        if self.run_away:
+            print('run away, too much enemies!')
+            self.goto(self.get_previous_waypoint())
+        else:
+            if my_target:
+                distance = self.me.get_distance_to(my_target.x, my_target.y)
+                if self.strategy_steps % 10:
+                    print('Visible targets: %s, closest @%s' % (len(enemies_in_range['minion']) +
+                                                                len(enemies_in_range['wizard']) +
+                                                                len(enemies_in_range['building']), distance))
+                if distance <= self.me.cast_range:
+                    angle = self.me.get_angle_to(my_target.x, my_target.y)
+                    move.turn = angle
+                    if abs(angle) < game.staff_sector / 2:
 
-            if ally_in_range['minion'] == 0 and enemies_in_range['minion'] >= 2:
-                if self.me.life < self.LOW_HP_FACTOR:
-                    self.run_away = True
-            if (ally_in_range['wizard'] == 0 and ally_in_range['minion'] <= 1) and enemies_in_range['wizard'] > 2:
-                if self.me.life < self.LOW_HP_FACTOR:
-                    self.run_away = True
-            if ally_in_range['minion'] == 0 and enemies_in_range['building'] == 1:
-                if self.me.life < self.LOW_HP_FACTOR:
-                    self.run_away = True
-
-            # switch to enemy wizard
-            nearest_enemy_wizard = self.get_enemy_wizard_in_range()
-            if nearest_enemy_wizard:
-                nearest_target = nearest_enemy_wizard
-            else:
-                nearest_target = self.get_nearest_target()
-
-            if self.run_away:
-                print('run away, too much enemies!')
-                self.goto(self.get_previous_waypoint())
-            else:
-                if nearest_target:
-                    if self.strategy_steps % 10:
-                        print('Visible targets: %s' % (len(enemies_in_range['minion']) + len(enemies_in_range['wizard']) + len(enemies_in_range['building'])))
-                    distance = self.me.get_distance_to(nearest_target.x, nearest_target.y)
-                    if distance <= self.me.cast_range:
-                        angle = self.me.get_angle_to(nearest_target.x, nearest_target.y)
-                        move.turn = angle
-                        if abs(angle) < game.staff_sector / 2:
-
-                            # self.me.remaining_action_cooldown_ticks == 0
-                            # remaining_cooldown_ticks_by_action[2] magic_missile - 60 ticks
-                            if self.me.remaining_cooldown_ticks_by_action[2] == 0:
-                                print('MAGIC_MISSILE fires to %s' % [nearest_target.x, nearest_target.y])
-                                move.action = ActionType.MAGIC_MISSILE
-                                move.cast_angle = angle
-                                move.min_cast_distance = distance - nearest_target.radius + game.magic_missile_radius
-                            else:
-                                print(self.me.remaining_cooldown_ticks_by_action[2])
+                        # self.me.remaining_action_cooldown_ticks == 0
+                        # remaining_cooldown_ticks_by_action[2] magic_missile - 60 ticks
+                        if self.me.remaining_cooldown_ticks_by_action[2] == 0:
+                            print('MAGIC_MISSILE fires to %s' % [my_target.x, my_target.y])
+                            move.action = ActionType.MAGIC_MISSILE
+                            move.cast_angle = angle
+                            move.min_cast_distance = distance - my_target.radius + game.magic_missile_radius
+                        else:
+                            print(self.me.remaining_cooldown_ticks_by_action[2])
 
         self.goto(self.get_next_waypoint())
 
@@ -159,19 +172,19 @@ class MyStrategy:
         map_size = game.map_size
 
         self.waypoints.append([100, map_size - 100])
-        self.waypoints.append([200, map_size - 800])
+        # self.waypoints.append([200, map_size - 800])
         self.waypoints.append([200, map_size * 0.75])
-        self.waypoints.append([200, map_size * 0.625])
+        # self.waypoints.append([200, map_size * 0.625])
         self.waypoints.append([200, map_size * 0.5])
-        self.waypoints.append([200, map_size * 0.375])
+        # self.waypoints.append([200, map_size * 0.375])
         self.waypoints.append([200, map_size * 0.25])
-        self.waypoints.append([200, 200])
+        self.waypoints.append([250, 250])
         self.waypoints.append([map_size * 0.25, 200])
-        self.waypoints.append([map_size * 0.375, 200])
+        # self.waypoints.append([map_size * 0.375, 200])
         self.waypoints.append([map_size * 0.5, 200])
-        self.waypoints.append([map_size * 0.625, 200])
+        # self.waypoints.append([map_size * 0.625, 200])
         self.waypoints.append([map_size * 0.75, 200])
-        self.waypoints.append([map_size - 700, 200])
+        # self.waypoints.append([map_size - 700, 200])
         self.waypoints.append([map_size - 200, 200])
 
         self.lane = LaneType.TOP
@@ -218,10 +231,12 @@ class MyStrategy:
         angle = self.me.get_angle_to(waypoint[0], waypoint[1])
         self.move_.turn = angle
 
-        if abs(angle) < self.game.staff_sector:
-            self.move_.speed = self.game.wizard_forward_speed
+        self.move_.speed = self.game.wizard_forward_speed
 
-    def get_nearest_target(self):
+        # if abs(angle) <= self.game.staff_sector:
+        #     self.move_.speed = self.game.wizard_forward_speed
+
+    def get_nearest_target_in_my_visible_range(self):
         targets = []
         for position in self.world.buildings:
             targets.append(position)
@@ -241,28 +256,28 @@ class MyStrategy:
                 nearest_target_distance = distance
         return nearest_target
 
-    def get_enemies_in_range(self):
+    def get_enemies_in_attack_range(self):
         enemy_minions, enemy_wizards, enemy_buildings = [], [], []
         for target in self.world.buildings:
             if target.faction == Faction.NEUTRAL or target.faction == self.me.faction:
                 continue
-            if self.me.get_distance_to(target.x, target.y) <= self.ENEMY_RANGE:
+            if self.me.get_distance_to(target.x, target.y) <= self.ATTACK_RANGE:
                 enemy_buildings.append(target)
 
         for target in self.world.wizards:
             if target.faction == self.me.faction:
                 continue
-            if self.me.get_distance_to(target.x, target.y) <= self.ENEMY_RANGE:
+            if self.me.get_distance_to(target.x, target.y) <= self.ATTACK_RANGE:
                 enemy_wizards.append(target)
 
         for target in self.world.minions:
             if target.faction == Faction.NEUTRAL or target.faction == self.me.faction:
                 continue
-            if self.me.get_distance_to(target.x, target.y) <= self.ENEMY_RANGE:
+            if self.me.get_distance_to(target.x, target.y) <= self.ATTACK_RANGE:
                 enemy_minions.append(target)
         return {'minion': enemy_minions, 'wizard': enemy_wizards, 'building': enemy_buildings}
 
-    def get_ally_in_range(self):
+    def get_ally_in_shared_exp_range(self):
         ally_minions, ally_wizards, ally_buildings = [], [], []
         for target in self.world.buildings:
             if target.faction == self.me.faction and self.me.get_distance_to(target.x, target.y) <= self.ALLY_RANGE:
@@ -277,12 +292,12 @@ class MyStrategy:
                 ally_minions.append(target)
         return {'minion': ally_minions, 'wizard': ally_wizards, 'building': ally_buildings}
 
-    def get_enemy_wizard_in_range(self):
+    def get_closest_or_with_low_hp_enemy_wizard_in_attack_range(self):
         enemy_wizards = []
         for target in self.world.wizards:
             if target.faction == self.me.faction:
                 continue
-            if self.me.get_distance_to(target.x, target.y) <= self.ENEMY_RANGE:
+            if self.me.get_distance_to(target.x, target.y) <= self.ATTACK_RANGE:
                 enemy_wizards.append(target)
         if len(enemy_wizards) > 0:
             the_closest_enemy_wizard = enemy_wizards[0]
@@ -318,6 +333,19 @@ class MyStrategy:
         return obstacles
 
     # ------ heuristics functions ---------------------------------------
+    # points table:
+    # only HOST:
+    #   damage dealt / 0.25 = points  attacks with the same spell = 60 ticks, diff. actions 30 ticks
+    #   bonus obtain = 200 points
+    # everybody in range 600:  + 67% bonus if more than 1 ally // amount of ally
+    #   25 % of tower or minion max_life:
+    #       orc = 25  points /  20 points
+    #       fet = 25  points /  20 points
+    #       tow = 250 points /  208 points
+    #   100 % max_life of enemy wiz. = 100 points
+    # winner = 1000 points
+    #
+
     def path_finder(self, waypoint):
         # wizard_radius         # 35
         # faction_base_radius   # 100
@@ -489,3 +517,50 @@ class MyStrategy:
                         and (coords[1] >= net[v_line][h_line][1] - cell_radius) and (coords[1] <= net[v_line][h_line][1] + cell_radius):
                     return (v_line + 1) * 100 + h_line
         return None
+
+    def dodge_and_evade(self):
+        # projectile parameters:
+        #  - dodge:
+        #       orc: range 50
+        #  - evade:
+        #       magic_missile: r 10, spd 40, dmg 12
+        #       frostbolt    : r 15, spd 35, dmg 35
+        #       fireball     : r 20, spd 30, dmg 24 / 240 ticks + r100 dmg 12 linear
+        #       dart         : r 5,  spd 50, dmg 6
+        #
+
+        projectiles = []
+        for projectile in self.world.projectiles:
+            if self.me.get_distance_to(projectile.x, projectile.y) < self.EVADE_DISTANCE:
+                if projectile.faction == self.me.faction:
+                    continue
+                else:
+                    projectiles.append(projectile)
+        if len(projectiles) > 0:
+            print('Number of projectiles in attack range: %s' % len(projectiles))
+
+            # target is me?
+            for projectile in projectiles:
+                distance_to_me = self.me.get_distance_to(projectile.x, projectile.y)
+                distance_to_me = distance_to_me - self.me.radius - projectile.radius
+                if projectile.type == ProjectileType.MAGIC_MISSILE:
+                    tick_explode = distance_to_me / 40
+                elif projectile.type == ProjectileType.FIREBALL:
+                    tick_explode = distance_to_me / 30
+                elif projectile.type == ProjectileType.FROST_BOLT:
+                    tick_explode = distance_to_me / 35
+                elif projectile.type == ProjectileType.DART:
+                    tick_explode = distance_to_me / 50
+                dodge_time = tick_explode * self.game.wizard_strafe_speed
+                print(dodge_time)
+
+
+
+
+        return False
+
+    def minion_shelter(self):
+        pass
+
+    def exp_soak_bot(self):
+        pass
