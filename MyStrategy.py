@@ -85,6 +85,7 @@ class MyStrategy:
     strategy_steps = 0
 
     def move(self, me: Wizard, world: World, game: Game, move: Move):
+
         self.initialize_strategy(game, me)
         self.initialize_tick(world=world, game=game, me=me, move=move)
 
@@ -157,38 +158,22 @@ class MyStrategy:
         random.seed(game.random_seed)
         map_size = game.map_size
 
-        if me.faction == Faction.ACADEMY:
-            self.waypoints.append([100, map_size - 100])
-            self.waypoints.append([200, map_size - 800])
-            self.waypoints.append([200, map_size * 0.75])
-            self.waypoints.append([200, map_size * 0.625])
-            self.waypoints.append([200, map_size * 0.5])
-            self.waypoints.append([200, map_size * 0.375])
-            self.waypoints.append([200, map_size * 0.25])
-            self.waypoints.append([200, 200])
-            self.waypoints.append([map_size * 0.25, 200])
-            self.waypoints.append([map_size * 0.375, 200])
-            self.waypoints.append([map_size * 0.5, 200])
-            self.waypoints.append([map_size * 0.625, 200])
-            self.waypoints.append([map_size * 0.75, 200])
-            self.waypoints.append([map_size - 700, 200])
-            self.waypoints.append([map_size - 200, 200])
-        elif me.faction == Faction.RENEGADES:
-            self.waypoints.append([map_size - 100, 100])
-            self.waypoints.append([map_size - 800, 200])
-            self.waypoints.append([map_size * 0.75, 200])
-            self.waypoints.append([map_size * 0.625, 200])
-            self.waypoints.append([map_size * 0.5, 200])
-            self.waypoints.append([map_size * 0.375, 200])
-            self.waypoints.append([map_size * 0.25, 200])
-            self.waypoints.append([200, 200])
-            self.waypoints.append([200, map_size * 0.25])
-            self.waypoints.append([200, map_size * 0.375])
-            self.waypoints.append([200, map_size * 0.5])
-            self.waypoints.append([200, map_size * 0.625])
-            self.waypoints.append([190, map_size * 0.75])
-            self.waypoints.append([190, map_size - 700])
-            self.waypoints.append([200, map_size - 200])
+        self.waypoints.append([100, map_size - 100])
+        self.waypoints.append([200, map_size - 800])
+        self.waypoints.append([200, map_size * 0.75])
+        self.waypoints.append([200, map_size * 0.625])
+        self.waypoints.append([200, map_size * 0.5])
+        self.waypoints.append([200, map_size * 0.375])
+        self.waypoints.append([200, map_size * 0.25])
+        self.waypoints.append([200, 200])
+        self.waypoints.append([map_size * 0.25, 200])
+        self.waypoints.append([map_size * 0.375, 200])
+        self.waypoints.append([map_size * 0.5, 200])
+        self.waypoints.append([map_size * 0.625, 200])
+        self.waypoints.append([map_size * 0.75, 200])
+        self.waypoints.append([map_size - 700, 200])
+        self.waypoints.append([map_size - 200, 200])
+
         self.lane = LaneType.TOP
 
     def initialize_tick(self, world, game, me, move):
@@ -205,7 +190,6 @@ class MyStrategy:
 
         for waypoint_index in range(0, last_waypoint_index - 1):
             waypoint = self.waypoints[waypoint_index]
-
             if self.me.get_distance_to(waypoint[0], waypoint[1]) <= self.WAYPOINT_RADIUS:
                 return self.waypoints[waypoint_index + 1]
             if math.hypot(waypoint[0] - last_waypoint[0], waypoint[1] - last_waypoint[1]) < self.me.get_distance_to(
@@ -453,13 +437,13 @@ class MyStrategy:
         if end_node is None:
             return waypoint
 
-        v_name = (int(start_node) // 100) - 1
-        h_name = int(start_node) % 100
-        next_coords = net_2d[v_name][h_name]
-
-        v_name = (int(end_node) // 100) - 1
-        h_name = int(end_node) % 100
-        next_coords = net_2d[v_name][h_name]
+        # v_name = (int(start_node) // 100) - 1
+        # h_name = int(start_node) % 100
+        # next_coords = net_2d[v_name][h_name]
+        #
+        # v_name = (int(end_node) // 100) - 1
+        # h_name = int(end_node) % 100
+        # next_coords = net_2d[v_name][h_name]
 
         next_node = self.bfs(graph_to_search=graph, start=start_node, end=end_node)[1]
 

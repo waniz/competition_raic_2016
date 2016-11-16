@@ -24,15 +24,13 @@ strategy v0.3: Completed!
     - grid_numeration
     - bfs
     - receive next tick coordinates
-    // with obstacles:
-    [1301, 1201, 1101, 1001, 901, 801, 802, 702, 602, 502]
-    # excluded nodes: 1104, 1301, 1401, 1403, 1005, 1202, 1302, 1304, 1004, 1201, 1301, 1303, 1505, 1503, 1403, 1206
-    // without:
-    [1301, 1201, 1101, 1001, 901, 801, 802, 702, 602, 502]
-
   +2. switch to player enemies if in range of attacks
   +3. waypoints for second side TOP lane
   +4. stuck fix at [200, 200]
+  5. add option for opposite side:
+      l: My place is x: 100.0, y: 3700.0 [100, 3900.0]
+         My place is x: 200.0, y: 3700.0 [100, 3900.0]
+      d: My place is x: 200.0, y: 3800.0 [3900.0, 100]
 
 strategy v0.4:
   1. wait for minion wave
