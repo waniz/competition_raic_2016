@@ -70,12 +70,13 @@ class MyStrategy:
     move_ = None
 
     # constants section
-    WAYPOINT_RADIUS = 50
+    WAYPOINT_RADIUS = 100
     LOW_HP_FACTOR = 0.37
     ENEMY_RANGE = 700
     ALLY_RANGE = 500
-    LOW_HP_ENEMY_SWITCH = 12 * 3  # 12 - wizard_damage
+    LOW_HP_ENEMY_SWITCH = 12 * 3   # 12 - wizard_damage
     PATH_FINDING_GRID = 35 * 10    # 35 - wizard_radius
+    PATH_FINDING_CELL_RADIUS = 35  # x2
 
     # get modules initialised
     lane = LaneType()
@@ -148,7 +149,6 @@ class MyStrategy:
 
         if me.faction == Faction.ACADEMY:
             self.waypoints.append([100, map_size - 100])
-            self.waypoints.append([100, map_size - 400])
             self.waypoints.append([200, map_size - 800])
             self.waypoints.append([200, map_size * 0.75])
             self.waypoints.append([200, map_size * 0.625])
@@ -167,7 +167,6 @@ class MyStrategy:
             self.waypoints.append([map_size - 200, 200])
         elif me.faction == Faction.RENEGADES:
             self.waypoints.append([map_size - 100, 100])
-            self.waypoints.append([map_size - 400, 100])
             self.waypoints.append([map_size - 800, 200])
             self.waypoints.append([map_size * 0.75, 200])
             self.waypoints.append([map_size * 0.625, 200])
@@ -218,7 +217,10 @@ class MyStrategy:
                 return waypoint
 
     def goto(self, waypoint):
-        next_tick_position = self.path_finder(waypoint)
+        waypoint = self.path_finder(waypoint)
+
+        if self.strategy_steps % 10 == 0:
+            print(waypoint)
 
         angle = self.me.get_angle_to(waypoint[0], waypoint[1])
         self.move_.turn = angle
@@ -334,7 +336,7 @@ class MyStrategy:
         # wizard_forward_speed  # 4.0
         # wizard_vision_range   # 600.0 distance between waypoint ~ 600.0
 
-        start = [self.me.x, self.me.y]         # x:200 y:1000
+        start = [self.me.x, self.me.y]           # x:200 y:1000
         finish = [waypoint[0], waypoint[1]]      # x:200 y:600
         # start = [200, 1000]
         # finish = [200, 600]
@@ -363,10 +365,7 @@ class MyStrategy:
         if rt[1] <= 0:
             rt[1] = 1
 
-        # parameters:
-        # lb: x: 1 y: 1300  # rb: x: 500 y: 1300  # lt: x: 1 y: 300  # lt: x: 500 y: 300
-
-        step = self.game.wizard_radius
+        step = self.PATH_FINDING_CELL_RADIUS
         net_2d = []
 
         for net_y in range(int(min(lt[1], rt[1]) + step), int(max(lb[1], rb[1]) - step), int(step * 2)):
@@ -375,42 +374,92 @@ class MyStrategy:
                 line_x.append([net_x, net_y])
             net_2d.append(line_x)
 
+        # get obstacles
         obstacles = self.get_obstacles_in_zone([
             int(min(lb[0], lt[0]) + step), int(max(rb[0], rt[0]) - step),
             int(min(lt[1], rt[1]) + step), int(max(lb[1], rb[1]) - step)])
 
+        # generate grid cell names
         net_2d_name = []
-        rows_in_net = len(net_2d)
-        columns_in_net = len(net_2d[0])
         for line_v in range(0, len(net_2d)):
             net_2d_v = []
             for line_h in range(0, len(net_2d[line_v])):
-                net_2d_v.append(line_v * 100 + line_h)
+                net_2d_v.append((line_v + 1) * 100 + line_h)
             net_2d_name.append(net_2d_v)
 
-        # print(net_2d_name[0][0], net_2d_name[1][0], net_2d_name[0][1], net_2d_name[8][1])
+        # # make connections between elements
+        # for line_v in range(0, len(net_2d)):
+        #     for line_h in range(0, len(net_2d[line_v]) - 1):
+        #         graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v][line_h + 1])
+        #
+        # for line_v in range(0, len(net_2d) - 1):
+        #     for line_h in range(0, len(net_2d[line_v])):
+        #         graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v + 1][line_h])
+        #
+        # for line_v in range(0, len(net_2d) - 1):
+        #     for line_h in range(0, len(net_2d[line_v]) - 1):
+        #         graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v + 1][line_h + 1])
+        #
+        # for line_v in range(len(net_2d) - 1, 1, -1):
+        #     for line_h in range(len(net_2d[line_v]) - 1, 1, -1):
+        #         graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v - 1][line_h - 1])
 
+        # make connections between elements
         for line_v in range(0, len(net_2d)):
             for line_h in range(0, len(net_2d[line_v]) - 1):
-                if line_v == 2:
+                if not self.is_obstacle_in_node(net_2d[line_v][line_h + 1], obstacles, cell_radius=int(step)):
                     graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v][line_h + 1])
+                # else:
+                #     print('Excluded node %s #%s' % (net_2d[line_v][line_h + 1], (line_v + 1) * 100 + line_h))
 
         for line_v in range(0, len(net_2d) - 1):
             for line_h in range(0, len(net_2d[line_v])):
-                graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v + 1][line_h])
+                if not self.is_obstacle_in_node(net_2d[line_v + 1][line_h], obstacles, cell_radius=int(step)):
+                    graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v + 1][line_h])
+                # else:
+                #     print('Excluded node %s #%s' % (net_2d[line_v + 1][line_h], (line_v + 1) * 100 + line_h))
 
         for line_v in range(0, len(net_2d) - 1):
             for line_h in range(0, len(net_2d[line_v]) - 1):
-                graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v + 1][line_h + 1])
+                if not self.is_obstacle_in_node(net_2d[line_v + 1][line_h + 1], obstacles, cell_radius=int(step)):
+                    graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v + 1][line_h + 1])
+                # else:
+                #     print('Excluded node %s #%s' % (net_2d[line_v + 1][line_h + 1], (line_v + 1) * 100 + line_h))
 
         for line_v in range(len(net_2d) - 1, 1, -1):
             for line_h in range(len(net_2d[line_v]) - 1, 1, -1):
-                graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v - 1][line_h - 1])
+                if not self.is_obstacle_in_node(net_2d[line_v - 1][line_h - 1], obstacles, cell_radius=int(step)):
+                    graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v - 1][line_h - 1])
+                # else:
+                #     print('Excluded node %s #%s' % (net_2d[line_v - 1][line_h - 1], (line_v + 1) * 100 + line_h))
 
-        print(self.bfs(graph_to_search=graph, start=101, end=405))
+        # convert start and finish nodes
+        start_node = self.return_node(net_2d, [self.me.x, self.me.y], int(step))
+        end_node = self.return_node(net_2d, waypoint, int(step))
+
+        if start_node is None:
+            return waypoint
+
+        if end_node is None:
+            return waypoint
+
+        v_name = (int(start_node) // 100) - 1
+        h_name = int(start_node) % 100
+        next_coords = net_2d[v_name][h_name]
+
+        v_name = (int(end_node) // 100) - 1
+        h_name = int(end_node) % 100
+        next_coords = net_2d[v_name][h_name]
+
+        next_node = self.bfs(graph_to_search=graph, start=start_node, end=end_node)[1]
+
+        # return coordinates based on square name
+        v_name = (int(next_node) // 100) - 1
+        h_name = int(next_node) % 100
+        next_coords = net_2d[v_name][h_name]
 
         del graph
-        return waypoint
+        return next_coords
 
     @staticmethod
     def bfs(graph_to_search, start, end):
@@ -429,3 +478,20 @@ class MyStrategy:
                     if current_neighbour == end:
                         return new_path
                 visited.add(vertex)
+
+    @staticmethod
+    def is_obstacle_in_node(target_cell, obstacles, cell_radius):
+        for obstacle in obstacles:
+            squared_dist = (target_cell[0] - obstacle.x) ** 2 + (target_cell[1] - obstacle.y) ** 2
+            if squared_dist <= cell_radius ** 2:
+                return True
+        return False
+
+    @staticmethod
+    def return_node(net, coords, cell_radius):
+        for v_line in range(0, len(net)):
+            for h_line in range(0, len(net[0])):
+                if (coords[0] >= net[v_line][h_line][0] - cell_radius) and (coords[0] <= net[v_line][h_line][0] + cell_radius) \
+                        and (coords[1] >= net[v_line][h_line][1] - cell_radius) and (coords[1] <= net[v_line][h_line][1] + cell_radius):
+                    return (v_line + 1) * 100 + h_line
+        return None
