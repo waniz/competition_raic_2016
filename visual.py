@@ -136,5 +136,5 @@ def grid_generator():
     plt.scatter(net_grid_x, net_grid_y)
     plt.show()
 
-# path()
-grid_generator()
+path()
+# grid_generator()
