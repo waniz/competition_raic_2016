@@ -28,22 +28,30 @@ strategy v0.3: Completed!
   +3. waypoints for second side TOP lane
   +4. stuck fix at [200, 200]
 
-strategy v0.4:
+strategy v0.4: Completed!
   some tweaks in parameters (waypoints, waypoint_size)
 
-strategy v0.5:
-  !!1. wait for minion wave
-  2. go back correctly if enjured
-  3. substitude attack range,  visible range and close range
-  !!!4. stop go forward if enemies in visible range
-  5. check missiles at me
-  6. dodge left/right or top/bottom the missile
-  !17. if attacked by minion move back
-  +8. make an analisys of profits
-  9. bonus collection
+strategy v0.5: Completed!
+  +1. go back correctly if enjured
+  +2. stop go forward if enemies in visible range
+  +3. if attacked by minion move back
+  +4. make an analisys of profits
+  +5. sheck the borders of map
+  +6. check the strategy for the enemies
 
 strategy v0.6:
-  1. stuck with another wizards for exp boost
-  2. find where every ally go
-  3. stick together
-  4. soak exp ()
+  1. Refactor all from the beginning
+  2. Death counter
+
+strategy v0.7:
+  1. wait for minion wave
+  2. stuck with another wizards for exp boost
+  3. find where every ally go
+  4. stick together
+  5. soak exp ()
+  6. check missiles at me
+  7. dodge left/right or top/bottom the missile
+  8. bonus collection
+
+strategy v0.8:
+  1. optimize all search parameters
