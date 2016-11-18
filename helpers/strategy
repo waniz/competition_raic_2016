@@ -40,12 +40,20 @@ strategy v0.5: Completed!
   +6. check the strategy for the enemies
 
 strategy v0.6:
-  1. Refactor all from the beginning (simple)
-  2. Death counter
+  +1. Refactor all from the beginning (simple)
+  2. death counter
+  3. fix bug with whirlwind close to [200, 200]
+  4. check if stuck
+  5. fix problem with stuck in the beginning of the game
+  6. tweak some constants (atk. range + time for flie away, pathfinder)
+  7. probability of being stuck
+      - check where is the minion wave
+      - check how much free space
+      - move to free square
 
 strategy v0.7:
   1. wait for minion wave
-  2. stuck with another wizards for exp boost
+  2. stick with another wizards for exp boost
   3. find where every ally go
   4. stick together
   5. soak exp ()

@@ -71,15 +71,22 @@ class MyStrategy:
     ENEMY_IN_RANGE_TICK = 0        # 50
     BACK_ZONE = 150
     BACK_DISTANCE = 100
+    # catch me
+    EVADE_DISTANCE = 500
+    # stuck defence
+    NO_MOVE = 0
 
     # get modules initialised
     lane = LaneType()
     waypoints = []
     strategy_steps = 0
+    start_positions = []
+    respawn = []
 
     def move(self, me: Wizard, world: World, game: Game, move: Move):
 
-        self.initialize_strategy(game)
+        if self.strategy_steps == 0:
+            self.initialize_strategy(game)
         self.initialize_tick(world=world, game=game, me=me, move=move)
 
         # some information provider section -----------------
@@ -94,6 +101,52 @@ class MyStrategy:
                   (len(ally_in_range['minion']), len(ally_in_range['wizard']), len(ally_in_range['building'])))
             print('Current strategy tick is %s' % self.strategy_steps)
             print('')
+
+        # check is me stuck in the beginning
+        # self.start_positions.append([100, 3700])
+        # self.start_positions.append([300, 3900])
+        # self.start_positions.append([200, 3800])
+        # self.start_positions.append([300, 3800])
+        # self.start_positions.append([200, 3700])
+        if self.strategy_steps == 1:
+            self.respawn = [self.me.x, self.me.y]
+            angle = 0
+            if self.respawn == self.start_positions[0]:
+                print('Start position #%s %s' % (0, self.respawn))
+                angle = self.me.get_angle_to(self.me.x, self.me.y + self.BACK_DISTANCE)
+            if self.respawn == self.start_positions[1]:
+                print('Start position #%s %s' % (1, self.respawn))
+                angle = self.me.get_angle_to(self.me.x + self.BACK_DISTANCE, self.me.y)
+            if self.respawn == self.start_positions[2]:
+                print('Start position #%s %s' % (2, self.respawn))
+                angle = self.me.get_angle_to(self.me.x - self.BACK_DISTANCE, self.me.y + self.BACK_DISTANCE)
+            if self.respawn == self.start_positions[3]:
+                print('Start position #%s %s' % (3, self.respawn))
+                angle = self.me.get_angle_to(self.me.x + self.BACK_DISTANCE, self.me.y)
+            if self.respawn == self.start_positions[4]:
+                print('Start position #%s %s' % (4, self.respawn))
+                angle = self.me.get_angle_to(self.me.x, self.me.y + self.BACK_DISTANCE)
+            self.move_.turn = angle
+            self.move_.speed = self.game.wizard_backward_speed
+            return None
+        else:
+            if self.strategy_steps < 100:
+                angle = 0
+                if self.respawn == self.start_positions[0]:
+                    angle = self.me.get_angle_to(100, 3500)
+                if self.respawn == self.start_positions[1]:
+                    angle = self.me.get_angle_to(300, 3500)
+                if self.respawn == self.start_positions[2]:
+                    angle = self.me.get_angle_to(100, 3900)
+                if self.respawn == self.start_positions[3]:
+                    angle = self.me.get_angle_to(600, 3800)
+                if self.respawn == self.start_positions[4]:
+                    angle = self.me.get_angle_to(400, 3700)
+                self.move_.turn = angle
+                self.move_.speed = self.game.wizard_backward_speed
+                return None
+        # ingame-check, if stuck
+        pass
 
         # low hp run back
         if self.me.life < self.me.max_life * self.LOW_HP_FACTOR:
@@ -216,8 +269,13 @@ class MyStrategy:
         self.waypoints.append([map_size * 0.5, 200])
         self.waypoints.append([map_size * 0.75, 200])
         self.waypoints.append([map_size - 200, 200])
-
         self.lane = LaneType.TOP
+
+        self.start_positions.append([100, 3700])
+        self.start_positions.append([300, 3900])
+        self.start_positions.append([200, 3800])
+        self.start_positions.append([300, 3800])
+        self.start_positions.append([200, 3700])
 
     def initialize_tick(self, world, game, me, move):
         self.world = world
@@ -287,6 +345,7 @@ class MyStrategy:
     def goto(self, waypoint):
         if self.strategy_steps % 10 == 0:
             print('Milestone %s' % waypoint)
+
         waypoint = self.path_finder(waypoint)
 
         if self.strategy_steps % 10 == 0:
@@ -437,6 +496,11 @@ class MyStrategy:
             int(min(lb[0], lt[0]) + step), int(max(rb[0], rt[0]) - step),
             int(min(lt[1], rt[1]) + step), int(max(lb[1], rb[1]) - step)])
 
+        # for obstacle in obstacles:
+        #     if obstacle.faction == self.me.faction:
+        #         print(obstacle.x, obstacle.y)
+        # print('')
+
         # generate grid cell names
         net_2d_name = []
         for line_v in range(0, len(net_2d)):
@@ -496,9 +560,11 @@ class MyStrategy:
         end_node = self.return_node(net_2d, waypoint, int(step))
 
         if start_node is None:
+            print('no start waypoint found')
             return waypoint
 
         if end_node is None:
+            print('no finish waypoint found')
             return waypoint
 
         # v_name = (int(start_node) // 100) - 1
@@ -595,6 +661,7 @@ class MyStrategy:
             print('Number of projectiles in attack range: %s' % len(projectiles))
 
             # target is me?
+            tick_explode = 0
             for projectile in projectiles:
                 distance_to_me = self.me.get_distance_to(projectile.x, projectile.y)
                 distance_to_me = distance_to_me - self.me.radius - projectile.radius
@@ -614,8 +681,3 @@ class MyStrategy:
 
         return False
 
-    def minion_shelter(self):
-        pass
-
-    def exp_soak_bot(self):
-        pass

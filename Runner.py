@@ -1,7 +1,7 @@
 import sys
 
-from MyStrategy_v0_5 import MyStrategy
 from RemoteProcessClient import RemoteProcessClient
+from MyStrategy import MyStrategy
 from model.Move import Move
 
 

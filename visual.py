@@ -136,5 +136,25 @@ def grid_generator():
     plt.scatter(net_grid_x, net_grid_y)
     plt.show()
 
-path()
+
+def start_paths():
+    plt.xlim(0, 1000)
+    plt.ylim(0, 1000)
+
+    # x = [-100, -300, -200, -300, -200]
+    # y = [-3700, -3900, -3800, -3800, -3700]
+
+    x = [100, 300, 200, 300, 200]
+    y = [300, 100, 200, 200, 300]
+    area = 350
+    plt.scatter(x, y, s=area, color='green')
+
+    x = [400]
+    y = [400]
+    area = 1000
+    plt.scatter(x, y, s=area, color='green')
+    plt.show()
+
+start_paths()
+# path()
 # grid_generator()
