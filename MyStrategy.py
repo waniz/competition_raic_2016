@@ -60,14 +60,15 @@ class MyStrategy:
 
     # constants section
     WAYPOINT_RADIUS = 250
-    LOW_HP_FACTOR = 0.5
+    LOW_HP_FACTOR = [0.6, 0.75]
     ATTACK_RANGE = 500
     ALLY_RANGE = 600
     LOW_HP_ENEMY_SWITCH = 12 * 3   # 12 - wizard_damage
     PATH_FINDING_GRID = 35 * 10    # 35 - wizard_radius
-    PATH_FINDING_CELL_RADIUS = 35  # x2
+    PATH_FINDING_CELL_RADIUS = 25  # x2
+    MAX_SPEED = 4
     # stay in range of attack
-    ENEMY_CLOSE_RANGE = 450
+    ENEMY_CLOSE_RANGE = 400
     ENEMY_IN_RANGE_TICK = 0        # 50
     BACK_ZONE = 150
     BACK_DISTANCE = 100
@@ -75,6 +76,13 @@ class MyStrategy:
     EVADE_DISTANCE = 500
     # stuck defence
     NO_MOVE = 0
+    PREVIOUS_POS = None
+    MAX_NO_MOVE = 10
+
+    # bonus
+    BONUS_POINT_TOP = [1200, 1200]
+    BONUS_POINT_BOT = [2800, 2800]
+    CREATE_TICK = 2500
 
     # get modules initialised
     lane = LaneType()
@@ -86,7 +94,7 @@ class MyStrategy:
     def move(self, me: Wizard, world: World, game: Game, move: Move):
 
         if self.strategy_steps == 0:
-            self.initialize_strategy(game)
+            self.initialize_strategy(game, me)
         self.initialize_tick(world=world, game=game, me=me, move=move)
 
         # some information provider section -----------------
@@ -102,73 +110,74 @@ class MyStrategy:
             print('Current strategy tick is %s' % self.strategy_steps)
             print('')
 
-        # check is me stuck in the beginning
-        # self.start_positions.append([100, 3700]) - OK
-        # self.start_positions.append([300, 3900]) - No
-        # self.start_positions.append([200, 3800]) - ?
-        # self.start_positions.append([300, 3800]) - No
-        # self.start_positions.append([200, 3700]) - OK
+        # go back at the beginning for not being stuck with the others
         if self.strategy_steps == 1:
-            self.respawn = [self.me.x, self.me.y]
             angle = 0
-            if self.respawn == self.start_positions[0]:
-                print('Start position #%s %s' % (0, self.respawn))
-                angle = self.me.get_angle_to(self.me.x, self.me.y + self.BACK_DISTANCE)
-            if self.respawn == self.start_positions[1]:
-                print('Start position #%s %s' % (1, self.respawn))
-                angle = self.me.get_angle_to(self.me.x + self.BACK_DISTANCE, self.me.y)
             if self.respawn == self.start_positions[2]:
                 print('Start position #%s %s' % (2, self.respawn))
                 angle = self.me.get_angle_to(self.me.x - self.BACK_DISTANCE, self.me.y + self.BACK_DISTANCE)
-            if self.respawn == self.start_positions[3]:
-                print('Start position #%s %s' % (3, self.respawn))
-                angle = self.me.get_angle_to(self.me.x + self.BACK_DISTANCE, self.me.y)
-            if self.respawn == self.start_positions[4]:
-                print('Start position #%s %s' % (4, self.respawn))
-                angle = self.me.get_angle_to(self.me.x, self.me.y + self.BACK_DISTANCE)
             self.move_.turn = angle
             self.move_.speed = self.game.wizard_backward_speed
             return None
         else:
-            if self.strategy_steps < 100:
+            if self.strategy_steps < 40:
                 angle = 0
-                if self.respawn == self.start_positions[0]:
-                    angle = self.me.get_angle_to(100, 3500)
-                if self.respawn == self.start_positions[1]:
-                    angle = self.me.get_angle_to(300, 3500)
                 if self.respawn == self.start_positions[2]:
-                    angle = self.me.get_angle_to(100, 3900)
-                if self.respawn == self.start_positions[3]:
-                    angle = self.me.get_angle_to(600, 3800)
-                if self.respawn == self.start_positions[4]:
-                    angle = self.me.get_angle_to(400, 3700)
+                    angle = self.me.get_angle_to(100, 3800)
                 self.move_.turn = angle
                 self.move_.speed = self.game.wizard_backward_speed
                 return None
-        # ingame-check, if stuck
-        pass
+
+        # in game-check, if stuck
+        if self.me.x == self.PREVIOUS_POS[0] and self.me.y == self.PREVIOUS_POS[1]:
+            self.NO_MOVE += 1
+            if self.NO_MOVE >= self.MAX_NO_MOVE:
+                move.action = ActionType.MAGIC_MISSILE
+                move.cast_angle = self.me.angle
+                self.move_.turn = self.game.wizard_max_turn_angle
+                self.move_.speed = self.game.wizard_forward_speed
+                self.move_.strafe_speed = self.game.wizard_strafe_speed
+                return None
+        self.PREVIOUS_POS = [self.me.x, self.me.y]
 
         # low hp run back
-        if self.me.life < self.me.max_life * self.LOW_HP_FACTOR:
-            print('go back - low hp: x: %s y: % s' % (self.me.x, self.me.y))
-            self.goto(self.get_previous_waypoint())
+        if self.me.life < self.me.max_life * self.LOW_HP_FACTOR[0]:
+            if self.me.life < self.me.max_life * self.LOW_HP_FACTOR[1]:
+                print('go back - low hp: x: %s y: % s' % (round(self.me.x, 1), round(self.me.y, 1)))
+                self.goto(self.get_previous_waypoint())
             return None
+
+        # bonus collection
+        # if self.lane == LaneType.TOP:
+        #     if self.me.get_distance_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1]) < 700:
+        #         if self.world.bonuses[0]:
+        #             angle = self.me.get_angle_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1])
+        #             self.move_.turn = angle
+        #             self.move_.speed = self.game.wizard_forward_speed
+        # if self.lane == LaneType.BOTTOM:
+        #     if self.me.get_distance_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1]) < 700:
+        #         if self.world.bonuses[0]:
+        #             angle = self.me.get_angle_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1])
+        #             self.move_.turn = angle
+        #             self.move_.speed = self.game.wizard_forward_speed
 
         # staying close to frontier
         if self.ENEMY_IN_RANGE_TICK > 0:
-            if self.me.x < 100:
-                angle = self.me.get_angle_to(self.me.x + self.BACK_DISTANCE / 2, self.me.y + self.BACK_DISTANCE)
+            if self.me.x < 70:
+                angle = self.me.get_angle_to(self.me.x, self.me.y + self.BACK_DISTANCE)
                 self.move_.turn = angle
-            if self.me.y < 50:
-                angle = self.me.get_angle_to(self.me.x, self.me.y + self.BACK_DISTANCE * 2)
+                self.move_.speed = self.game.wizard_backward_speed
+            elif self.me.y < 70:
+                angle = self.me.get_angle_to(self.me.x, self.me.y + self.BACK_DISTANCE)
                 self.move_.turn = angle
-
-            self.move_.speed = -self.game.wizard_backward_speed
+                self.move_.speed = self.game.wizard_backward_speed
+            else:
+                self.move_.speed = -self.game.wizard_backward_speed
             self.ENEMY_IN_RANGE_TICK -= 1
 
             # switch to close enemy
             nearest_enemy_wizard = self.get_closest_or_with_low_hp_enemy_wizard_in_attack_range()
-            if nearest_enemy_wizard:
+            if nearest_enemy_wizard is not None:
                 my_target = nearest_enemy_wizard
             else:
                 my_target = self.get_nearest_target_in_my_visible_range()
@@ -190,7 +199,10 @@ class MyStrategy:
         the_closest = self.get_closest_enemy()
         # TODO add obstacles check
         if the_closest is not None:
-            self.ENEMY_IN_RANGE_TICK = 40
+            if self.me.life == self.me.max_life:
+                self.ENEMY_IN_RANGE_TICK = 1
+            else:
+                self.ENEMY_IN_RANGE_TICK = 40
             print('range limit active, me x: %s, y: %s, HP - %s' % (round(self.me.x, 1), round(self.me.y, 1),
                                                                     self.me.life))
             delta_x = self.me.x - the_closest.x
@@ -200,7 +212,7 @@ class MyStrategy:
             # I
             if delta_y > 0 and abs(delta_x) <= self.BACK_ZONE:
                 if self.me.y > 3800:
-                    angle = self.me.get_angle_to(self.me.x, 3999)
+                    angle = self.me.get_angle_to(self.me.x, 3900)
                 else:
                     angle = self.me.get_angle_to(self.me.x, self.me.y + self.BACK_DISTANCE)
             # II
@@ -256,20 +268,12 @@ class MyStrategy:
         # nothing to do - go further
         self.goto(self.get_next_waypoint())
 
-    def initialize_strategy(self, game):
+    def initialize_strategy(self, game, me):
         random.seed(game.random_seed)
         map_size = game.map_size
 
-        self.waypoints.append([100, map_size - 100])
-        self.waypoints.append([200, map_size * 0.75])
-        self.waypoints.append([200, map_size * 0.5])
-        self.waypoints.append([200, map_size * 0.25])
-        self.waypoints.append([250, 250])
-        self.waypoints.append([map_size * 0.25, 200])
-        self.waypoints.append([map_size * 0.5, 200])
-        self.waypoints.append([map_size * 0.75, 200])
-        self.waypoints.append([map_size - 200, 200])
-        self.lane = LaneType.TOP
+        self.respawn = [me.x, me.y]
+        self.PREVIOUS_POS = self.respawn
 
         self.start_positions.append([100, 3700])
         self.start_positions.append([300, 3900])
@@ -277,12 +281,48 @@ class MyStrategy:
         self.start_positions.append([300, 3800])
         self.start_positions.append([200, 3700])
 
+        if self.respawn == self.start_positions[0] or self.respawn == self.start_positions[4]:
+            self.waypoints.append([50, map_size - 50])
+            self.waypoints.append([200, map_size * 0.75])
+            self.waypoints.append([200, map_size * 0.5])
+            self.waypoints.append([200, map_size * 0.3])
+            self.waypoints.append([250, 250])
+            self.waypoints.append([map_size * 0.25, 200])
+            self.waypoints.append([map_size * 0.5, 200])
+            self.waypoints.append([map_size * 0.75, 200])
+            self.waypoints.append([map_size - 200, 200])
+            self.lane = LaneType.TOP
+        elif self.respawn == self.start_positions[1] or self.respawn == self.start_positions[3]:
+            self.waypoints.append([50, map_size - 50])
+            self.waypoints.append([map_size * 0.3, map_size - 250])
+            self.waypoints.append([map_size * 0.5, map_size - 250])
+            self.waypoints.append([map_size * 0.8, map_size - 250])
+            self.waypoints.append([map_size - 250, map_size - 250])
+            self.waypoints.append([map_size - 200, map_size * 0.75])
+            self.waypoints.append([map_size - 200, map_size * 0.5])
+            self.waypoints.append([map_size - 200, map_size * 0.25])
+            self.waypoints.append([map_size - 200, 200])
+            self.lane = LaneType.BOTTOM
+        elif self.respawn == self.start_positions[2]:
+            self.waypoints.append([50, map_size - 50])
+            self.waypoints.append([200, map_size * 0.75])
+            self.waypoints.append([200, map_size * 0.5])
+            self.waypoints.append([200, map_size * 0.3])
+            self.waypoints.append([250, 250])
+            self.waypoints.append([map_size * 0.25, 200])
+            self.waypoints.append([map_size * 0.5, 200])
+            self.waypoints.append([map_size * 0.75, 200])
+            self.waypoints.append([map_size - 200, 200])
+            self.lane = LaneType.TOP
+
     def initialize_tick(self, world, game, me, move):
         self.world = world
         self.game = game
         self.me = me
         self.move_ = move
         self.strategy_steps += 1
+        if self.strategy_steps >= 1000:
+            self.MAX_SPEED = self.game.wizard_forward_speed
 
     def get_enemies_in_attack_range(self):
         enemy_minions, enemy_wizards, enemy_buildings = [], [], []
@@ -346,14 +386,29 @@ class MyStrategy:
         if self.strategy_steps % 10 == 0:
             print('Milestone %s' % waypoint)
 
-        waypoint = self.path_finder(waypoint)
+        waypoint_bfs = self.path_finder(waypoint)
 
         if self.strategy_steps % 10 == 0:
-            print(waypoint)
-
-        angle = self.me.get_angle_to(waypoint[0], waypoint[1])
-        self.move_.turn = angle
-        self.move_.speed = self.game.wizard_forward_speed
+            print(waypoint, waypoint_bfs)
+        if waypoint_bfs:
+            angle = self.me.get_angle_to(waypoint_bfs[0], waypoint_bfs[1])
+            self.move_.turn = angle
+            self.move_.speed = self.MAX_SPEED
+        else:
+            if waypoint:
+                angle = self.me.get_angle_to(waypoint[0], waypoint[1])
+                self.move_.turn = angle
+                self.move_.speed = self.MAX_SPEED
+            # else:
+            #     distance = 6000
+            #     best_index = -1
+            #     for index in range(0, len(self.waypoints)):
+            #         if self.me.get_distance_to(self.waypoints[index][0], self.waypoints[index][1]) < distance:
+            #             distance = self.me.get_distance_to(self.waypoints[index][0], self.waypoints[index][1])
+            #             best_index = index
+            #     angle = self.me.get_angle_to(self.waypoints[best_index][0], self.waypoints[best_index][1])
+            #     self.move_.turn = angle
+            #     self.move_.speed = self.game.wizard_forward_speed
 
     def get_closest_or_with_low_hp_enemy_wizard_in_attack_range(self):
         enemy_wizards = []
@@ -454,7 +509,10 @@ class MyStrategy:
         # wizard_vision_range   # 600.0 distance between waypoint ~ 600.0
 
         start = [self.me.x, self.me.y]           # x:200 y:1000
-        finish = [waypoint[0], waypoint[1]]      # x:200 y:600
+        if waypoint:
+            finish = [waypoint[0], waypoint[1]]      # x:200 y:600
+        else:
+            finish = self.waypoints[1]
         # start = [200, 1000]
         # finish = [200, 600]
         graph = IndirectedGraph()
@@ -575,15 +633,19 @@ class MyStrategy:
         # h_name = int(end_node) % 100
         # next_coords = net_2d[v_name][h_name]
 
-        next_node = self.bfs(graph_to_search=graph, start=start_node, end=end_node)[1]
+        next_path = self.bfs(graph_to_search=graph, start=start_node, end=end_node)
+        del graph
 
         # return coordinates based on square name
-        v_name = (int(next_node) // 100) - 1
-        h_name = int(next_node) % 100
-        next_coords = net_2d[v_name][h_name]
-
-        del graph
-        return next_coords
+        if next_path:
+            if len(next_path) > 1:
+                next_node = next_path[1]
+                v_name = (int(next_node) // 100) - 1
+                h_name = int(next_node) % 100
+                next_coords = net_2d[v_name][h_name]
+                return next_coords
+            else:
+                return waypoint
 
     @staticmethod
     def bfs(graph_to_search, start, end):
@@ -613,11 +675,12 @@ class MyStrategy:
 
     @staticmethod
     def return_node(net, coords, cell_radius):
-        for v_line in range(0, len(net)):
-            for h_line in range(0, len(net[0])):
-                if (coords[0] >= net[v_line][h_line][0] - cell_radius) and (coords[0] <= net[v_line][h_line][0] + cell_radius) \
-                        and (coords[1] >= net[v_line][h_line][1] - cell_radius) and (coords[1] <= net[v_line][h_line][1] + cell_radius):
-                    return (v_line + 1) * 100 + h_line
+        if coords:
+            for v_line in range(0, len(net)):
+                for h_line in range(0, len(net[0])):
+                    if (coords[0] >= net[v_line][h_line][0] - cell_radius) and (coords[0] <= net[v_line][h_line][0] + cell_radius) \
+                            and (coords[1] >= net[v_line][h_line][1] - cell_radius) and (coords[1] <= net[v_line][h_line][1] + cell_radius):
+                        return (v_line + 1) * 100 + h_line
         return None
 
     def get_obstacles_in_zone(self, range_xy):
