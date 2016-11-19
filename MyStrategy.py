@@ -103,11 +103,11 @@ class MyStrategy:
             print('')
 
         # check is me stuck in the beginning
-        # self.start_positions.append([100, 3700])
-        # self.start_positions.append([300, 3900])
-        # self.start_positions.append([200, 3800])
-        # self.start_positions.append([300, 3800])
-        # self.start_positions.append([200, 3700])
+        # self.start_positions.append([100, 3700]) - OK
+        # self.start_positions.append([300, 3900]) - No
+        # self.start_positions.append([200, 3800]) - ?
+        # self.start_positions.append([300, 3800]) - No
+        # self.start_positions.append([200, 3700]) - OK
         if self.strategy_steps == 1:
             self.respawn = [self.me.x, self.me.y]
             angle = 0
