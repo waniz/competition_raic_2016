@@ -52,18 +52,11 @@ strategy v0.6: Completed!
   +10. attack if stuck in place (probably trees in this direction)
 
 strategy v0.7:
-  1. wait for minion wave
-  2. stick with another wizards for exp boost
-  3. find where every ally go
-  4. stick together
-  5. soak exp ()
-  6. check missiles at me
-  7. dodge left/right or top/bottom the missile
-  8. bonus collection
-  7. change waypoint system (current waypoint, last waypoint, next waypoint)
-  8. stay in range of points++ if low hp and nobody attacks
-  !!9. fix bug with misses
-  !!10. waypoint problems at 200, 200 and 200, 2500..
+  +1. stay in range of points++ if low hp and nobody in range
+  !!2. fix bug with misses
+  +3. waypoint problems at 200, 200 and 200, 2500..
+  +4. check if at pos 4-5 and x<50 y< 50
+  5. no start waypoint found
 
 strategy v0.8:
   1. optimize all search parameters
@@ -71,4 +64,7 @@ strategy v0.8:
       - check where is the minion wave
       - check how much free space
       - move to free square
-  3. kill switch, if I can kill an enemy wizard, no go back if safe
+  3. bonus collection
+  4. change waypoint system (current waypoint, last waypoint, next waypoint)
+  5. wait for minion wave
+  6. kill switch, if I can kill an enemy wizard, no go back if safe
