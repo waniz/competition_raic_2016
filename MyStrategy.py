@@ -60,7 +60,7 @@ class MyStrategy:
 
     # constants section
     WAYPOINT_RADIUS = 250
-    LOW_HP_FACTOR = [0.6, 0.75]
+    LOW_HP_FACTOR = [0.6, 0.7]
     ATTACK_RANGE = 500
     ALLY_RANGE = 600
     LOW_HP_ENEMY_SWITCH = 12 * 3   # 12 - wizard_damage
@@ -132,12 +132,12 @@ class MyStrategy:
         if self.me.x == self.PREVIOUS_POS[0] and self.me.y == self.PREVIOUS_POS[1]:
             self.NO_MOVE += 1
             if self.NO_MOVE >= self.MAX_NO_MOVE:
-                move.action = ActionType.MAGIC_MISSILE
-                move.cast_angle = self.me.angle
                 self.move_.turn = self.game.wizard_max_turn_angle
                 self.move_.speed = self.game.wizard_forward_speed
                 self.move_.strafe_speed = self.game.wizard_strafe_speed
                 return None
+        else:
+            self.NO_MOVE = 0
         self.PREVIOUS_POS = [self.me.x, self.me.y]
 
         # low hp run back

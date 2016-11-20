@@ -61,6 +61,9 @@ strategy v0.7:
   7. dodge left/right or top/bottom the missile
   8. bonus collection
   7. change waypoint system (current waypoint, last waypoint, next waypoint)
+  8. stay in range of points++ if low hp and nobody attacks
+  !!9. fix bug with misses
+  !!10. waypoint problems at 200, 200 and 200, 2500..
 
 strategy v0.8:
   1. optimize all search parameters
