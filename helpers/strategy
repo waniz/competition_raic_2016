@@ -52,11 +52,18 @@ strategy v0.6: Completed!
   +10. attack if stuck in place (probably trees in this direction)
 
 strategy v0.7:
-  +1. stay in range of points++ if low hp and nobody in range
-  !!2. fix bug with misses
+  +1. stay in range of points++ if low HP and nobody in range
+  !!??2. fix bug with misses
   +3. waypoint problems at 200, 200 and 200, 2500..
-  +4. check if at pos 4-5 and x<50 y< 50
+  +4. check if at pos. 4-5 and x<50 y< 50
   5. no start waypoint found
+  6. waypoint refactor
+  7. if I have got damage than go back
+  8. bonus collection
+  9. wait for minions in the beginning
+  10. focus fire
+  11. focus priority - low HP, wizard, building
+  12. different go back zone for melee and range
 
 strategy v0.8:
   1. optimize all search parameters
