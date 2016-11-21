@@ -72,6 +72,9 @@ FLAW 1: bonus collection
 strategy v0.8: Completed!
   +1. fix bug with no fire a missile, because of the angle to left to much
 
+strategy v0.: Completed!
+  +1. fix bug with waypoints in TOP
+
 FLAW 1: bonus collection
 strategy v0.9:
   1. bonus collection
