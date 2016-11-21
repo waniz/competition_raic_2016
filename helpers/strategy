@@ -53,8 +53,8 @@ strategy v0.6: Completed!
 
 +FLAW 1: waypoint system
 +FLAW 2: wait close to minion wave
-FLAW 3: use waypoint system for low hp movement
-FLAW 4: bonus collection
++FLAW 3: use waypoint system for low hp movement
++FLAW 4: use new waypoint system for range limit function
 strategy v0.7: Tests - NO
   +1. stay in range of points++ if low HP and nobody in range
   +2. fix bug with misses - this is feature
@@ -62,13 +62,13 @@ strategy v0.7: Tests - NO
   +4. check if at pos. 4-5 and x<50 y< 50
   +5. no start waypoint found
   +6. waypoint refactor
-  7. if I have got damage than go back
-  8. bonus collection
-  +9. wait for minions in the beginning
-  10. focus fire
-  11. focus priority - low HP, wizard, building
-  12. different go back zone for melee and range
+  +7. if I have got damage than go back
+  +8. wait for minions in the beginning
+  +9. focus priority - low HP, wizard, building
+  +10. if I died waypoint system fix
 
+
+FLAW 1: bonus collection
 strategy v0.8:
   1. optimize all search parameters
   2. probability of being stuck
@@ -79,3 +79,5 @@ strategy v0.8:
   4. change waypoint system (current waypoint, last waypoint, next waypoint)
   5. wait for minion wave
   6. kill switch, if I can kill an enemy wizard, no go back if safe
+  7. bonus collection
+  8. different go back zone for melee and range
