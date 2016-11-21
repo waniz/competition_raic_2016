@@ -24,8 +24,6 @@ def path():
     map_size = 4000
     waypoints_path = []
     waypoints_path.append([100, map_size - 100])
-    waypoints_path.append([100, map_size - 400])
-    waypoints_path.append([200, map_size - 800])
     waypoints_path.append([200, map_size * 0.75])
     waypoints_path.append([200, map_size * 0.5])
     waypoints_path.append([200, map_size * 0.25])
@@ -40,29 +38,39 @@ def path():
         x.append(-waypoint[0])
         y.append(-waypoint[1])
     plt.scatter(x, y, color='blue')
-    plt.xlim(0, -4000)
-    plt.ylim(-4000, 0)
 
     waypoints_path = []
-    waypoints_path.append([map_size - 100, 100])
-    waypoints_path.append([map_size - 400, 100])
-    waypoints_path.append([map_size - 800, 200])
-    waypoints_path.append([map_size * 0.75, 200])
-    waypoints_path.append([map_size * 0.5, 200])
-    waypoints_path.append([map_size * 0.25, 200])
-    waypoints_path.append([200, 200])
-    waypoints_path.append([200, map_size * 0.25])
-    waypoints_path.append([200, map_size * 0.5])
-    waypoints_path.append([190, map_size * 0.75])
-    waypoints_path.append([200, map_size - 200])
+    waypoints_path.append([100, map_size - 100])
+    waypoints_path.append([map_size * 0.25, map_size - 200])
+    waypoints_path.append([map_size * 0.5, map_size - 200])
+    waypoints_path.append([map_size * 0.75, map_size - 200])
+    waypoints_path.append([map_size - 200, map_size - 200])
+    waypoints_path.append([map_size - 200, map_size * 0.75])
+    waypoints_path.append([map_size - 200, map_size * 0.5])
+    waypoints_path.append([map_size - 200, map_size * 0.25])
+    waypoints_path.append([map_size - 200, 200])
 
     x, y = [], []
     for waypoint in waypoints_path:
         x.append(-waypoint[0])
         y.append(-waypoint[1])
     plt.scatter(x, y, color='orange')
-    plt.xlim(0, -4000)
-    plt.ylim(-4000, 0)
+
+    waypoints_path = []
+    waypoints_path.append([100, map_size - 100])
+    waypoints_path.append([200, map_size - 800])
+    waypoints_path.append([1000, map_size - 800])
+    waypoints_path.append([1500, map_size - 1500])
+    waypoints_path.append([map_size * 0.5, map_size * 0.5])
+    waypoints_path.append([map_size - 1500, map_size - 2500])
+    waypoints_path.append([map_size * 0.75, map_size * 0.25])
+    waypoints_path.append([map_size - 500, map_size - 3500])
+
+    x, y = [], []
+    for waypoint in waypoints_path:
+        x.append(-waypoint[0])
+        y.append(-waypoint[1])
+    plt.scatter(x, y, color='black')
 
     plt.show()
 
@@ -155,6 +163,6 @@ def start_paths():
     plt.scatter(x, y, s=area, color='green')
     plt.show()
 
-start_paths()
-# path()
+# start_paths()
+path()
 # grid_generator()

@@ -36,30 +36,42 @@ strategy v0.5: Completed!
   +2. stop go forward if enemies in visible range
   +3. if attacked by minion move back
   +4. make an analisys of profits
-  +5. sheck the borders of map
+  +5. check the borders of map
   +6. check the strategy for the enemies
 
-strategy v0.6:
+strategy v0.6: Completed!
   +1. Refactor all from the beginning (simple)
-  2. death counter
-  3. fix bug with whirlwind close to [200, 200]
-  4. check if stuck
-  5. fix problem with stuck in the beginning of the game
-  6. tweak some constants (atk. range + time for flie away, pathfinder)
-  7. probability of being stuck
-      - check where is the minion wave
-      - check how much free space
-      - move to free square
+  +2. fix bug with whirlwind close to [200, 200]
+  +3. check if stuck
+  +4. fix problem with stuck in the beginning of the game
+  +?5. tweak some constants (atk. range + time for flie away, pathfinder)
+  +6. fix if go back in range system and close to end of map
+  +?7. no start waypoint bug
+  +8. stop run back with low hp if no enemies in visible range
+  +9. simple path bonus collection
+  +10. attack if stuck in place (probably trees in this direction)
 
 strategy v0.7:
-  1. wait for minion wave
-  2. stick with another wizards for exp boost
-  3. find where every ally go
-  4. stick together
-  5. soak exp ()
-  6. check missiles at me
-  7. dodge left/right or top/bottom the missile
+  +1. stay in range of points++ if low HP and nobody in range
+  !!??2. fix bug with misses
+  +3. waypoint problems at 200, 200 and 200, 2500..
+  +4. check if at pos. 4-5 and x<50 y< 50
+  5. no start waypoint found
+  6. waypoint refactor
+  7. if I have got damage than go back
   8. bonus collection
+  9. wait for minions in the beginning
+  10. focus fire
+  11. focus priority - low HP, wizard, building
+  12. different go back zone for melee and range
 
 strategy v0.8:
   1. optimize all search parameters
+  2. probability of being stuck
+      - check where is the minion wave
+      - check how much free space
+      - move to free square
+  3. bonus collection
+  4. change waypoint system (current waypoint, last waypoint, next waypoint)
+  5. wait for minion wave
+  6. kill switch, if I can kill an enemy wizard, no go back if safe
