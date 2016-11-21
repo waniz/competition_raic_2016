@@ -51,19 +51,20 @@ strategy v0.6: Completed!
   +9. simple path bonus collection
   +10. attack if stuck in place (probably trees in this direction)
 
-FLAW 1: waypoint system
-FLAW 2: wait close to minion wave
-FLAW 3: bonus collection
-strategy v0.7:
++FLAW 1: waypoint system
++FLAW 2: wait close to minion wave
+FLAW 3: use waypoint system for low hp movement
+FLAW 4: bonus collection
+strategy v0.7: Tests - NO
   +1. stay in range of points++ if low HP and nobody in range
   +2. fix bug with misses - this is feature
   +3. waypoint problems at 200, 200 and 200, 2500..
   +4. check if at pos. 4-5 and x<50 y< 50
-  5. no start waypoint found
-  6. waypoint refactor
+  +5. no start waypoint found
+  +6. waypoint refactor
   7. if I have got damage than go back
   8. bonus collection
-  9. wait for minions in the beginning
+  +9. wait for minions in the beginning
   10. focus fire
   11. focus priority - low HP, wizard, building
   12. different go back zone for melee and range
