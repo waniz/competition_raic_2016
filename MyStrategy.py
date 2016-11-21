@@ -67,7 +67,7 @@ class MyStrategy:
     ALLY_RANGE = 600
     LOW_HP_ENEMY_SWITCH = 12 * 2                # 12 - wizard_damage
     PATH_FINDING_GRID = 35 * 10                 # 35 - wizard_radius
-    PATH_FINDING_CELL_RADIUS = 20               # x2
+    PATH_FINDING_CELL_RADIUS = 25               # x2
     MAX_SPEED = 4
     # stay in range of attack
     ENEMY_CLOSE_RANGE = 400
@@ -78,7 +78,7 @@ class MyStrategy:
     EVADE_DISTANCE = 500
     MOVE_LOW_HP = 0
     MINION_STAY = [1360, 5]                     # check it
-    ENEMIES_RANGE_LIMIT = [450, 450, 370, 220]  # wizard, building, fetish, orc
+    ENEMIES_RANGE_LIMIT = [475, 450, 350, 270]  # wizard, building, fetish, orc
     RANGE_LIMIT_ACTIVE = False
     # stuck defence
     NO_MOVE = 0
@@ -221,12 +221,13 @@ class MyStrategy:
                             move.action = ActionType.MAGIC_MISSILE
                             move.cast_angle = angle
                             move.min_cast_distance = distance - my_target.radius + game.magic_missile_radius - 10
+                            return None
             # go back
             waypoint = self.last_waypoint()
-            angle = self.me.get_angle_to(waypoint[0], waypoint[1])
-            self.move_.turn = -angle
+            if self.strategy_steps % 20 == 0:
+                angle = self.me.get_angle_to(waypoint[0], waypoint[1])
+                self.move_.turn = -angle
             self.move_.speed = -self.game.wizard_backward_speed
-            # print('range limit active')
             self.RANGE_LIMIT_ACTIVE = False
             return None
 
@@ -378,48 +379,54 @@ class MyStrategy:
             self.waypoints.append([250, map_size * 0.625])
             self.waypoints.append([200, map_size * 0.5])
             self.waypoints.append([200, map_size * 0.3])
-            self.waypoints.append([200, 600])
-            self.waypoints.append([250, 250])
-            self.waypoints.append([600, 200])
+            self.waypoints.append([200, 800])
+            self.waypoints.append([200, 500])
+            self.waypoints.append([300, 300])
+            self.waypoints.append([200, 500])
+            self.waypoints.append([200, 800])
             self.waypoints.append([map_size * 0.3, 190])
             self.waypoints.append([map_size * 0.5, 190])
             self.waypoints.append([map_size * 0.625, 190])
             self.waypoints.append([map_size * 0.75, 190])
             self.waypoints.append([map_size - 200, 190])
             self.lane = LaneType.TOP
-            self.LAST_WAYPOINT_INDEX = 12
+            self.LAST_WAYPOINT_INDEX = 14
         elif self.respawn == self.start_positions[1] or self.respawn == self.start_positions[3]:
             self.waypoints.append([50, map_size - 50])
             self.waypoints.append([map_size * 0.25, map_size - 200])
-            self.waypoints.append([map_size * 0.375, map_size - 250])
-            self.waypoints.append([map_size * 0.5, map_size - 250])
-            self.waypoints.append([map_size * 0.7, map_size - 250])
-            self.waypoints.append([map_size - 600, map_size - 250])
-            self.waypoints.append([map_size - 250, map_size - 250])
-            self.waypoints.append([map_size - 200, map_size - 600])
+            self.waypoints.append([map_size * 0.375, map_size - 200])
+            self.waypoints.append([map_size * 0.5, map_size - 200])
+            self.waypoints.append([map_size * 0.7, map_size - 200])
+            self.waypoints.append([map_size - 800, map_size - 250])
+            self.waypoints.append([map_size - 500, map_size - 250])
+            self.waypoints.append([map_size - 300, map_size - 300])
+            self.waypoints.append([map_size - 200, map_size - 500])
+            self.waypoints.append([map_size - 200, map_size - 800])
             self.waypoints.append([map_size - 200, map_size * 0.75])
             self.waypoints.append([map_size - 200, map_size * 0.625])
             self.waypoints.append([map_size - 200, map_size * 0.5])
             self.waypoints.append([map_size - 200, map_size * 0.3])
             self.waypoints.append([map_size - 200, 200])
             self.lane = LaneType.BOTTOM
-            self.LAST_WAYPOINT_INDEX = 12
+            self.LAST_WAYPOINT_INDEX = 14
         elif self.respawn == self.start_positions[2]:
             self.waypoints.append([50, map_size - 50])
             self.waypoints.append([200, map_size * 0.75])
             self.waypoints.append([250, map_size * 0.625])
             self.waypoints.append([200, map_size * 0.5])
             self.waypoints.append([200, map_size * 0.3])
-            self.waypoints.append([200, 600])
-            self.waypoints.append([250, 250])
-            self.waypoints.append([600, 200])
+            self.waypoints.append([200, 800])
+            self.waypoints.append([200, 500])
+            self.waypoints.append([300, 300])
+            self.waypoints.append([200, 500])
+            self.waypoints.append([200, 800])
             self.waypoints.append([map_size * 0.3, 190])
             self.waypoints.append([map_size * 0.5, 190])
             self.waypoints.append([map_size * 0.625, 190])
             self.waypoints.append([map_size * 0.75, 190])
             self.waypoints.append([map_size - 200, 190])
             self.lane = LaneType.TOP
-            self.LAST_WAYPOINT_INDEX = 12
+            self.LAST_WAYPOINT_INDEX = 14
 
     def initialize_tick(self, world, game, me, move):
         self.world = world
