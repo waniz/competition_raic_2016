@@ -78,7 +78,7 @@ class MyStrategy:
     EVADE_DISTANCE = 500
     MOVE_LOW_HP = 0
     MINION_STAY = [1360, 5]                     # check it
-    ENEMIES_RANGE_LIMIT = [450, 450, 350, 200]  # wizard, building, fetish, orc
+    ENEMIES_RANGE_LIMIT = [450, 450, 370, 220]  # wizard, building, fetish, orc
     RANGE_LIMIT_ACTIVE = False
     # stuck defence
     NO_MOVE = 0
@@ -131,6 +131,7 @@ class MyStrategy:
             if self.respawn == self.start_positions[2]:
                 print('Start position #%s %s' % (2, self.respawn))
                 angle = self.me.get_angle_to(self.me.x - self.BACK_DISTANCE, self.me.y + self.BACK_DISTANCE)
+                self.MINION_STAY = [1460, 5]
             self.move_.turn = angle
             self.move_.speed = self.game.wizard_backward_speed
             return None
@@ -435,7 +436,7 @@ class MyStrategy:
             self.DEATH_COUNT += 1
             self.strategy_steps = self.world.tick_index + 1
             print('--------------------------------------')
-            print('I was died %s times' % self.DEATH_COUNT)
+            print('I was dead %s times' % self.DEATH_COUNT)
             print('--------------------------------------')
             self.MOVE_LOW_HP = 0
 
