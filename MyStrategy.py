@@ -83,7 +83,7 @@ class MyStrategy:
     # stuck defence
     NO_MOVE = 0
     PREVIOUS_POS = None
-    MAX_NO_MOVE = 15
+    MAX_NO_MOVE = 20
     FIGHTING = False
     # new waypoint system
     CURRENT_WAYPOINT_INDEX = 1
@@ -206,8 +206,11 @@ class MyStrategy:
         if self.RANGE_LIMIT_ACTIVE:
             # attack if can:
             nearest_enemy_wizard = self.get_closest_or_with_low_hp_enemy_wizard_in_attack_range()
+            tower = self.get_tower_in_range()
             if nearest_enemy_wizard:
                 my_target = nearest_enemy_wizard
+            elif tower:
+                my_target = tower
             else:
                 my_target = self.get_nearest_target_in_my_visible_range()
             if my_target:
@@ -224,7 +227,7 @@ class MyStrategy:
                             return None
             # go back
             waypoint = self.last_waypoint()
-            if self.strategy_steps % 20 == 0:
+            if self.strategy_steps % 15 == 0:
                 angle = self.me.get_angle_to(waypoint[0], waypoint[1])
                 self.move_.turn = -angle
             self.move_.speed = -self.game.wizard_backward_speed
@@ -325,8 +328,11 @@ class MyStrategy:
         # if on the edge of range and nothing triggers
 
         nearest_enemy_wizard = self.get_closest_or_with_low_hp_enemy_wizard_in_attack_range()
+        tower = self.get_tower_in_range()
         if nearest_enemy_wizard:
             my_target = nearest_enemy_wizard
+        elif tower:
+            my_target = tower
         else:
             my_target = self.get_nearest_target_in_my_visible_range()
 
@@ -616,6 +622,23 @@ class MyStrategy:
                         self.ATTACK_RANGE:
                     return enemy
             return the_closest_enemy_wizard
+        else:
+            return None
+
+    def get_tower_in_range(self):
+        towers = []
+        for target in self.world.buildings:
+            if target.faction == self.me.faction:
+                continue
+            if self.me.get_distance_to(target.x, target.y) <= self.ATTACK_RANGE:
+                towers.append(target)
+        if len(towers) > 0:
+            the_closest_tower = towers[0]
+            for tower in towers:
+                if self.me.get_distance_to(tower.x, tower.y) < self.me.get_distance_to(the_closest_tower.x,
+                                                                                       the_closest_tower.y):
+                    the_closest_tower = tower
+            return the_closest_tower
         else:
             return None
 
