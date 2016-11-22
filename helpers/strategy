@@ -68,19 +68,32 @@ strategy v0.7: Completed!
   +10. if I died waypoint system fix
   +?11. bug with close to enemy t-2?
 
-FLAW 1: bonus collection
 strategy v0.8: Completed!
   +1. fix bug with no fire a missile, because of the angle to left to much
 
 strategy v0.9: Completed!
   +1. fix bug with waypoints in TOP
 
-FLAW 1: bonus collection
++FLAW 1: simple bonus collection
++FLAW 2: time exceed the limit:
+            35x4@20  = 375  35x6@10 = 497 35x2@10 = 411 35x2@10 = [381, 418, 347]
+            35x1@8   = 335  35x2@5  =
+        v9  35x10@25 = [536, 500]
 strategy v1.0:
-  1. bonus collection
-  2. maybe use pathfinding for range limit function
+  1. simple bonus collection if nobody collects
+  2. add optimisation to go back after bonus was picked
   +3. prior: wizard-tower-minion
+  +4. time consumption check
+  5. make a profiling of time-consuming elements
+  6. remove going to corner of map if limit range active
 
+FLAW 1: optimisation of graph tree speed
 strategy v1.1:
   1. check if my base need help
   2. check if we push an enemy base
+  3. monitor base HP, monitor our towers, enemy towers if in vision
+  4. move to defence
+  5. change line
+  6. check if no enemy wizard at line, where everybody is
+  7. waypoints for defence
+  8. waypoints for attack

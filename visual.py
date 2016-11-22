@@ -39,6 +39,10 @@ def path():
     waypoints_path.append([map_size * 0.75, 190])
     waypoints_path.append([map_size - 200, 200])
 
+    waypoints_path.append([500, 500])
+    waypoints_path.append([800, 800])
+    waypoints_path.append([1200, 1200])
+
     x, y = [], []
     for waypoint in waypoints_path:
         x.append(-waypoint[0])
