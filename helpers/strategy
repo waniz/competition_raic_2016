@@ -10,12 +10,14 @@ strategy v0.1:  Completed!
   +6. attack enemy base
   +7. check my hp level
 
+
 strategy v0.2: Completed!
   +1. vivid path script
   +2. back if enemies here
     - only enemy minions
     - enemy wizards > ally
     - tower damage on me, ally minions close
+
 
 strategy v0.3: Completed!
   +1. path finder v1
@@ -28,8 +30,10 @@ strategy v0.3: Completed!
   +3. waypoints for second side TOP lane
   +4. stuck fix at [200, 200]
 
+
 strategy v0.4: Completed!
   some tweaks in parameters (waypoints, waypoint_size)
+
 
 strategy v0.5: Completed!
   +1. go back correctly if enjured
@@ -38,6 +42,7 @@ strategy v0.5: Completed!
   +4. make an analisys of profits
   +5. check the borders of map
   +6. check the strategy for the enemies
+
 
 strategy v0.6: Completed!
   +1. Refactor all from the beginning (simple)
@@ -50,6 +55,7 @@ strategy v0.6: Completed!
   +8. stop run back with low hp if no enemies in visible range
   +9. simple path bonus collection
   +10. attack if stuck in place (probably trees in this direction)
+
 
 +FLAW 1: waypoint system
 +FLAW 2: wait close to minion wave
@@ -68,32 +74,68 @@ strategy v0.7: Completed!
   +10. if I died waypoint system fix
   +?11. bug with close to enemy t-2?
 
+
 strategy v0.8: Completed!
   +1. fix bug with no fire a missile, because of the angle to left to much
+
 
 strategy v0.9: Completed!
   +1. fix bug with waypoints in TOP
 
-+FLAW 1: simple bonus collection
+
+-FLAW 1: simple bonus collection
 +FLAW 2: time exceed the limit:
             35x4@20  = 375  35x6@10 = 497 35x2@10 = 411 35x2@10 = [381, 418, 347]
             35x1@8   = 335  35x2@5  =
         v9  35x10@25 = [536, 500]
-strategy v1.0:
-  1. simple bonus collection if nobody collects
-  2. add optimisation to go back after bonus was picked
-  +3. prior: wizard-tower-minion
-  +4. time consumption check
-  5. make a profiling of time-consuming elements
-  6. remove going to corner of map if limit range active
+-- new profiler:
+            35x2@10  = Time spent: 383.24 Time bot: 22.26 s, units profiler: 3.77, graph: 67.51, BFS: 20.96
+            35x2@10  = Time spent: 363.83 Time bot: 17.22 s, units profiler: 3.47, graph: 41.49, BFS: 14.2
+            35x3@10  = Time spent: 393.90 Time bot: 25.62 s, units profiler: 3.39, graph: 84.92, BFS: 25.56
+
+        v9  35x10@25 = Time spent: 433.15 Time bot: 33.38 s, units profiler: 3.85, graph: 148.69, BFS: 8.01
+      ! 300 35x2@10  = Time spent: 356.89 Time bot: 12.4 s, units profiler: 3.98, graph: 33.74, BFS: 9.93
+            35x2@10  = Time spent: 351.94 Time bot: 8.91 s, units profiler: 3.2, graph: 28.21, BFS: 10.18
+        300 35x3@8   = Time spent: 393.71 Time bot: 35.71 s, units profiler: 3.81, graph: 93.41, BFS: 27.92
+-- tests:
+ p1  = 2617 Time bot: 12.37 s, units profiler: 3.79, graph: 30.72, BFS: 10.74   S = 57.62
+ p2  = 2281 Time bot: 14.13 s, units profiler: 3.42, graph: 25.23, BFS: 8.70    S = 51.48
+ p3  = 2252 Time bot: 15.65 s, units profiler: 3.72, graph: 31.24, BFS: 10.74   S = 61.35
+ p4  = 2271 Time bot: 12.62 s, units profiler: 3.90, graph: 30.25, BFS: 9.43    S = 56.20
+ p5  = 2320 Time bot: 06.81 s, units profiler: 2.52, graph: 19.21, BFS: 6.32    S = 34.86
+ p6  = 3182 Time bot: 17.61 s, units profiler: 3.99, graph: 23.45, BFS: 9.21    S = 54.26
+ p7  = 3021 Time bot: 13.39 s, units profiler: 4.04, graph: 33.41, BFS: 11.01   S = 61.85
+ p8  = 2013 Time bot: 23.17 s, units profiler: 3.38, graph: 34.08, BFS: 11.65   S = 72.28
+-p9  = 993  Time bot: 32.74 s, units profiler: 3.59, graph: 36.85, BFS: 6.09    S = 79.27
+     = 3203 Time bot: 10.52 s, units profiler: 4.78, graph: 34.56, BFS: 11.13   S = 60.99
+ p10 = 3706 Time bot: 12.96 s, units profiler: 3.77, graph: 29.08, BFS: 9.99    S = 55.80
+ Mean values: Score: 2686  Time: 64.59  params: 35x2@10
+strategy v1.0: Completed!
+  +1. prior: wizard-tower-minion
+  +2. time consumption check
+  +3. make a profiling of time-consuming elements
+  +4. remove going to corner of map if limit range active
+  +5. add check to angle if can't shot a missile
+  +6. make a 400 dist (now 500-700) waypoint lenghts
+  +7. handle with stuck situation
+  +8. add 400 distance to all lines
+
 
 FLAW 1: optimisation of graph tree speed
+FLAW 2: simple bonus collection
 strategy v1.1:
-  1. check if my base need help
-  2. check if we push an enemy base
-  3. monitor base HP, monitor our towers, enemy towers if in vision
-  4. move to defence
-  5. change line
-  6. check if no enemy wizard at line, where everybody is
-  7. waypoints for defence
-  8. waypoints for attack
+  1. simple bonus collection if nobody collects
+  2. add optimisation to go back after bonus was picked
+  3. check if my base need help
+  4. check if we push an enemy base
+  5. monitor base HP, monitor our towers, enemy towers if in vision
+  6. move to defence
+  7. change line
+  8. check if no enemy wizard at line, where everybody is
+  9. waypoints for defence
+  10. waypoints for attack
+  11. Backward / forward trouble if position on enemy side. Check pathfinding directions
+
+
+strategy v1.2:
+  1. new feature: Li algorithm + Tangent algorithm
