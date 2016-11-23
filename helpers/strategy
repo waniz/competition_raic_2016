@@ -152,13 +152,16 @@ FLAW 3: stuck detection - priority, but not vital for now
 
 
 STRATEGY v1.4:
-  1. new feature: Li algorithm + Tangent algorithm
-  2. local-runner visuals from github
-  3. check if my base need help
-  4. check if we push an enemy base
-  5. monitor base HP, monitor our towers, enemy towers if in vision
-  6. move to defence
-  7. change line
-  8. check if no enemy wizard at line, where everybody is
-  9. waypoints for defence
-  10. waypoints for attack
+  FEATURE: Li algorithm (wave algorithm)
+  FEATURE: Tangent algorithm
+  FEATURE: Local-runner visualisator
+  FEATURE: Danger Field algorithm
+
+  1. check if my base need help
+  2. check if we push an enemy base
+  3. monitor base HP, monitor our towers, enemy towers if in vision
+  4. move to defence
+  5. change line
+  6. check if no enemy wizard at line, where everybody is
+  7. waypoints for defence
+  8. waypoints for attack

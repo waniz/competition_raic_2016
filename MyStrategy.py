@@ -15,6 +15,14 @@ import math
 import time
 
 
+try:
+    from debug_client import DebugClient
+except:
+    debug = None
+else:
+    debug = DebugClient()
+
+
 class IndirectedGraph:
 
     def __init__(self):
@@ -120,6 +128,14 @@ class MyStrategy:
     bfs_profile = 0
     units_profile = 0
 
+    def visual_debugger(self):
+        with debug.post() as dbg:
+            for w in self.world.wizards:
+                dbg.text(w.x, w.y, '%s (%s)' % ([player.name for player in self.world.players if player.id == w.owner_player_id][0], w.level), (0, 1, 0))
+
+        with debug.abs() as dbg:
+            dbg.text(500, 500, 'HELLO ABS WORLD', (1, 0, 0))
+
     def move(self, me: Wizard, world: World, game: Game, move: Move):
 
         start_strategy_execute = time.time()
@@ -147,6 +163,10 @@ class MyStrategy:
             my_target = self.get_nearest_target_in_my_visible_range()
 
         self.units_profile += time.time() - units_timer
+
+        # visual debugger activation
+        if debug:
+            self.visual_debugger()
 
         # some information provider section
         if self.strategy_steps % 50 == 0:
