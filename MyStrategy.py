@@ -130,8 +130,8 @@ class MyStrategy:
 
     def visual_debugger(self):
         with debug.post() as dbg:
-            for w in self.world.wizards:
-                dbg.text(w.x, w.y, '%s (%s)' % ([player.name for player in self.world.players if player.id == w.owner_player_id][0], w.level), (0, 1, 0))
+            for wizard in self.world.wizards:
+                dbg.text(wizard.x, wizard.y, '%s (%s)' % ([player.name for player in self.world.players if player.id == wizard.owner_player_id][0], wizard.level), (0, 1, 0))
 
         with debug.abs() as dbg:
             dbg.text(500, 500, 'HELLO ABS WORLD', (1, 0, 0))
