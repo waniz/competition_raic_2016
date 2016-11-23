@@ -1,4 +1,4 @@
-strategy v0.1:  Completed!
+STRATEGY v0.1:  Completed!
   +1. move to top line with creeps
       - attack enemy creeps
   +2. soak exp with minions (attack)
@@ -11,7 +11,7 @@ strategy v0.1:  Completed!
   +7. check my hp level
 
 
-strategy v0.2: Completed!
+STRATEGY v0.2: Completed!
   +1. vivid path script
   +2. back if enemies here
     - only enemy minions
@@ -19,7 +19,7 @@ strategy v0.2: Completed!
     - tower damage on me, ally minions close
 
 
-strategy v0.3: Completed!
+STRATEGY v0.3: Completed!
   +1. path finder v1
     - grid
     - obstacles
@@ -31,11 +31,11 @@ strategy v0.3: Completed!
   +4. stuck fix at [200, 200]
 
 
-strategy v0.4: Completed!
+STRATEGY v0.4: Completed!
   some tweaks in parameters (waypoints, waypoint_size)
 
 
-strategy v0.5: Completed!
+STRATEGY v0.5: Completed!
   +1. go back correctly if enjured
   +2. stop go forward if enemies in visible range
   +3. if attacked by minion move back
@@ -44,7 +44,7 @@ strategy v0.5: Completed!
   +6. check the strategy for the enemies
 
 
-strategy v0.6: Completed!
+STRATEGY v0.6: Completed!
   +1. Refactor all from the beginning (simple)
   +2. fix bug with whirlwind close to [200, 200]
   +3. check if stuck
@@ -57,11 +57,12 @@ strategy v0.6: Completed!
   +10. attack if stuck in place (probably trees in this direction)
 
 
+STRATEGY v0.7: Completed!
 +FLAW 1: waypoint system
 +FLAW 2: wait close to minion wave
 +FLAW 3: use waypoint system for low hp movement
 +FLAW 4: use new waypoint system for range limit function
-strategy v0.7: Completed!
+
   +1. stay in range of points++ if low HP and nobody in range
   +2. fix bug with misses - this is feature
   +3. waypoint problems at 200, 200 and 200, 2500..
@@ -75,14 +76,15 @@ strategy v0.7: Completed!
   +?11. bug with close to enemy t-2?
 
 
-strategy v0.8: Completed!
+STRATEGY v0.8: Completed!
   +1. fix bug with no fire a missile, because of the angle to left to much
 
 
-strategy v0.9: Completed!
+STRATEGY v0.9: Completed!
   +1. fix bug with waypoints in TOP
 
 
+STRATEGY v1.0: Completed!
 -FLAW 1: simple bonus collection
 +FLAW 2: time exceed the limit:
             35x4@20  = 375  35x6@10 = 497 35x2@10 = 411 35x2@10 = [381, 418, 347]
@@ -110,7 +112,7 @@ strategy v0.9: Completed!
      = 3203 Time bot: 10.52 s, units profiler: 4.78, graph: 34.56, BFS: 11.13   S = 60.99
  p10 = 3706 Time bot: 12.96 s, units profiler: 3.77, graph: 29.08, BFS: 9.99    S = 55.80
  Mean values: Score: 2686  Time: 64.59  params: 35x2@10
-strategy v1.0: Completed!
+
   +1. prior: wizard-tower-minion
   +2. time consumption check
   +3. make a profiling of time-consuming elements
@@ -121,28 +123,37 @@ strategy v1.0: Completed!
   +8. add 400 distance to all lines
 
 
-strategy v1.1: - v10 is a total flaw, rollback to v9
+STRATEGY v1.1: - v10 is a total flaw, rollback to v9
   v9 old version
 
 
- p1 with stuck prototype: 2171 Time bot: 13.33 s, units profiler: 3.53, graph: 30.55, BFS: 10.27 D=2
-                        : 2302 Time bot: 12.92 s, units profiler: 4.11, graph: 28.32, BFS: 10.53 D=0
+STRATEGY v1.2: looking up for a flaw in v1.0 - Completed! I hope
+p1 with stuck prototype: 2171 Time bot: 13.33 s, units profiler: 3.53, graph: 30.55, BFS: 10.27 D=2
+                       : 2302 Time bot: 12.92 s, units profiler: 4.11, graph: 28.32, BFS: 10.53 D=0
 
- p1 without             : 2931 Time bot: 15.14 s, units profiler: 3.58, graph: 40.78, BFS: 12.75 D=1
-                        : 3173 Time bot: 14.5 s, units profiler: 3.9, graph: 44.79, BFS: 14.28   D=1
- p9 with                : 2788 Time bot: 10.64 s, units profiler: 3.43, graph: 27.85, BFS: 9.27  D=2
- p9 without             : 3068 Time bot: 10.89 s, units profiler: 3.59, graph: 44.26, BFS: 14.67 D=1
- p5 without             : 3084 Time bot: 10.77 s, units profiler: 3.61, graph: 39.96, BFS: 12.64 D=1
-strategy v1.2: looking up for a flaw in v1.0 - Completed! I hope
+p1 without             : 2931 Time bot: 15.14 s, units profiler: 3.58, graph: 40.78, BFS: 12.75 D=1
+                       : 3173 Time bot: 14.5 s, units profiler: 3.9, graph: 44.79, BFS: 14.28   D=1
+p9 with                : 2788 Time bot: 10.64 s, units profiler: 3.43, graph: 27.85, BFS: 9.27  D=2
+p9 without             : 3068 Time bot: 10.89 s, units profiler: 3.59, graph: 44.26, BFS: 14.67 D=1
+p5 without             : 3084 Time bot: 10.77 s, units profiler: 3.61, graph: 39.96, BFS: 12.64 D=1
+
   +1. probably new stuck function activates and ends the tick. So nothing usefull was archived
 
 
-FLAW 1: optimisation of graph tree speed
-FLAW 2: simple bonus collection
-FLAW 3: stuck detection!!!
-strategy v1.3:
+STRATEGY v1.3:
++FLAW 1: optimisation of graph tree speed - will wait for R2, current speed is OK (mean: 70s, limit: 210)
+FLAW 2: simple bonus collection!!! - need this badly -
+FLAW 3: stuck detection - priority, but not vital for now
+
   1. simple bonus collection if nobody collects
   2. add optimisation to go back after bonus was picked
+  3. Backward / forward trouble if position on enemy side. Check pathfinding directions
+  4. respawn position check
+
+
+STRATEGY v1.4:
+  1. new feature: Li algorithm + Tangent algorithm
+  2. local-runner visuals from github
   3. check if my base need help
   4. check if we push an enemy base
   5. monitor base HP, monitor our towers, enemy towers if in vision
@@ -151,9 +162,3 @@ strategy v1.3:
   8. check if no enemy wizard at line, where everybody is
   9. waypoints for defence
   10. waypoints for attack
-  11. Backward / forward trouble if position on enemy side. Check pathfinding directions
-  12. respawn position check
-
-
-strategy v1.4:
-  1. new feature: Li algorithm + Tangent algorithm
