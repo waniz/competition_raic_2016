@@ -188,24 +188,26 @@ class MyStrategy:
                 return None
 
         # in game-check, if stuck
-        if self.me.x == self.PREVIOUS_POS[0] and self.me.y == self.PREVIOUS_POS[1]:
-            if not self.FIGHTING:
-                self.NO_MOVE += 1
-                if self.NO_MOVE >= self.MAX_NO_MOVE * 2:
-                    print('Stuck detected +')
-                    self.move_.turn = self.game.wizard_max_turn_angle
-                    self.move_.strafe_speed = self.game.wizard_strafe_speed
-                elif (self.NO_MOVE >= self.MAX_NO_MOVE) and (self.NO_MOVE < self.MAX_NO_MOVE * 2):
-                    print('Stuck detected -')
-                    self.move_.turn = -self.game.wizard_max_turn_angle
-                    self.move_.strafe_speed = -self.game.wizard_strafe_speed
+        pass
+        # if self.me.x == self.PREVIOUS_POS[0] and self.me.y == self.PREVIOUS_POS[1]:
+        #     if not self.FIGHTING:
+        #         self.NO_MOVE += 1
+        #         if self.NO_MOVE >= self.MAX_NO_MOVE * 2:
+        #             print('Stuck detected +')
+        #             self.move_.turn = self.game.wizard_max_turn_angle
+        #             self.move_.strafe_speed = self.game.wizard_strafe_speed
+        #         elif (self.NO_MOVE >= self.MAX_NO_MOVE) and (self.NO_MOVE < self.MAX_NO_MOVE * 2):
+        #             print('Stuck detected -')
+        #             self.move_.turn = -self.game.wizard_max_turn_angle
+        #             self.move_.strafe_speed = -self.game.wizard_strafe_speed
+        #
+        #         self.strategy_time += time.time() - start_strategy_execute
+        #         return None
+        # else:
+        #     self.NO_MOVE = 0
+        # self.PREVIOUS_POS = [self.me.x, self.me.y]
 
-                self.strategy_time += time.time() - start_strategy_execute
-                return None
-        else:
-            self.NO_MOVE = 0
-        self.PREVIOUS_POS = [self.me.x, self.me.y]
-
+        pass
         # low hp run back
         if len(enemies['minion']) == 0 and len(enemies['wizard']) == 0 and len(enemies['building']) == 0:
             if self.MOVE_LOW_HP > 0:
