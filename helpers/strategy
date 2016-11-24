@@ -142,16 +142,22 @@ p5 without             : 3084 Time bot: 10.77 s, units profiler: 3.61, graph: 39
 
 STRATEGY v1.3:
 +FLAW 1: optimisation of graph tree speed - will wait for R2, current speed is OK (mean: 70s, limit: 210)
-FLAW 2: simple bonus collection!!! - need this badly -
-FLAW 3: stuck detection - priority, but not vital for now
++FLAW 3: stuck detection - priority, but not vital for now
 
-  1. simple bonus collection if nobody collects
-  2. add optimisation to go back after bonus was picked
-  3. Backward / forward trouble if position on enemy side. Check pathfinding directions
-  4. respawn position check
+  1. simple stuck modification
+  2. pathfinder visualisator
+  3. pathfinder params change to 35x4@35
 
 
 STRATEGY v1.4:
+FLAW 1: simple bonus collection!!! - need this badly -
+
+    1. simple bonus collection if nobody collects
+    2. add optimisation to go back after bonus was picked
+    3. Backward / forward trouble if position on enemy side. Check pathfinding directions
+
+
+STRATEGY v1.5:
   FEATURE: Li algorithm (wave algorithm)
   FEATURE: Tangent algorithm
   FEATURE: Local-runner visualisator
@@ -165,3 +171,4 @@ STRATEGY v1.4:
   6. check if no enemy wizard at line, where everybody is
   7. waypoints for defence
   8. waypoints for attack
+  9. respawn position check
