@@ -140,7 +140,7 @@ p5 without             : 3084 Time bot: 10.77 s, units profiler: 3.61, graph: 39
   +1. probably new stuck function activates and ends the tick. So nothing usefull was archived
 
 
-STRATEGY v1.3:
+STRATEGY v1.3: Completed!
 +FLAW 1: optimisation of graph tree speed - will wait for R2, current speed is OK (mean: 70s, limit: 210)
 +FLAW 3: stuck detection - priority, but not vital for now
 
@@ -150,11 +150,15 @@ STRATEGY v1.3:
 
 
 STRATEGY v1.4:
-FLAW 1: simple bonus collection!!! - need this badly -
++FLAW 1: simple bonus collection!!! - need this badly -
++FLAW 2: attack with teammates
+FLAW 3: defence the base
 
-    1. simple bonus collection if nobody collects
-    2. add optimisation to go back after bonus was picked
-    3. Backward / forward trouble if position on enemy side. Check pathfinding directions
+    +1. simple bonus collection if nobody collects
+    +2. add optimisation to go back after bonus was picked
+    +3. check which line we are pushing at start - and help
+    4. check if our base need help and change line + defence
+
 
 
 STRATEGY v1.5:
@@ -172,3 +176,8 @@ STRATEGY v1.5:
   7. waypoints for defence
   8. waypoints for attack
   9. respawn position check
+  10. Backward / forward trouble if position on enemy side. Check pathfinding directions
+
+
+  Watch list:
+  http://russianaicup.ru/game/view/44601

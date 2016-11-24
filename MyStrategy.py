@@ -108,12 +108,12 @@ class MyStrategy:
     BONUS_POINT_TOP = [1200, 1200]
     BONUS_POINT_BOT = [2800, 2800]
     CREATE_BONUS_TICK = 2500
-    BONUS_LAST = 2
-    BONUS_CURRENT = 0
     BONUS_EXIST = False
+    BONUS_COUNT = 0
 
     # get modules initialised
     lane = LaneType()
+    waypoints_top, waypoints_mid, waypoints_bot = [], [], []
     waypoints = []
     bonus_waypoints = []
     cross_the_map_waypoint = []
@@ -131,13 +131,21 @@ class MyStrategy:
     # debug parameters
     debug_next_milestone = [400, 3600]
     debug_next_waypoint = [400, 3600]
+    debug_view_path = []
 
+    # game analisys parameters
+    MIN_PUSH_AMOUNT = 2
 
     def visual_debugger(self):
         with debug.post() as dbg:
-            dbg.text(self.me.x, self.me.y, 'x: %s, y: %s' % (round(self.me.x), round(self.me.y)), (0, 0, 0))
+            dbg.text(self.me.x, self.me.y - 35, 'x: %s, y: %s' % (round(self.me.x), round(self.me.y)), (0, 0, 0))
             dbg.line(self.me.x, self.me.y, self.debug_next_milestone[0], self.debug_next_milestone[1], (0, 0, 0))
             dbg.line(self.me.x, self.me.y, self.debug_next_waypoint[0], self.debug_next_waypoint[1], (0, 0.5, 1))
+
+            if len(self.debug_view_path) > 2:
+                for i in range(2, len(self.debug_view_path)):
+                    dbg.line(self.debug_view_path[i-1][0], self.debug_view_path[i-1][1],
+                             self.debug_view_path[i][0], self.debug_view_path[i][1], (0.5, 0.5, 0.5))
 
     def move(self, me: Wizard, world: World, game: Game, move: Move):
 
@@ -147,6 +155,17 @@ class MyStrategy:
         if self.strategy_steps == 0:
             self.initialize_strategy(game, me)
         self.initialize_tick(world=world, game=game, me=me, move=move)
+
+        # choose TOP or BOT
+        if self.strategy_steps < 300:
+            return None
+        else:
+            if self.strategy_steps == 300:
+                self.lane = self.get_a_line_to_push()
+                if self.lane == LaneType.TOP:
+                    self.waypoints = self.waypoints_top
+                if self.lane == LaneType.BOTTOM:
+                    self.waypoints = self.waypoints_bot
 
         # get all tick information:
         units_timer = time.time()
@@ -167,12 +186,12 @@ class MyStrategy:
 
         self.units_profile += time.time() - units_timer
 
-        # visual debugger activation a tick ago
+        # visual debugger activation with information from a tick ago
         if debug:
             self.visual_debugger()
 
         # some information provider section
-        if self.strategy_steps % 50 == 0:
+        if self.strategy_steps % 100 == 0:
             print('My stats: hp %s of %s, score %s, coords: x %s y %s' % (me.life, me.max_life, me.xp, round(me.x, 2),
                                                                           round(me.y, 2)))
             print('Enemies: minion - %s, wizard - %s, building - %s' %
@@ -184,7 +203,7 @@ class MyStrategy:
             print('Time bot: %s s, units profiler: %s, graph: %s, BFS: %s' % (round(self.strategy_time, 2),
                   round(self.units_profile, 2), round(self.graph_profile, 2), round(self.bfs_profile, 2)))
             if self.strategy_steps >= 18800:
-                print('Death counter: %s' % self.DEATH_COUNT)
+                print('Death counter: %s Bonus counter: %s' % (self.DEATH_COUNT, self.BONUS_COUNT))
             print('----------------')
 
         # go back at the beginning for not being stuck with the others
@@ -237,24 +256,6 @@ class MyStrategy:
             self.NO_MOVE = 0
         self.PREVIOUS_POS = [self.me.x, self.me.y]
 
-        # if self.me.x == self.PREVIOUS_POS[0] and self.me.y == self.PREVIOUS_POS[1]:
-        #     if not self.FIGHTING:
-        #         self.NO_MOVE += 1
-        #         if self.NO_MOVE >= self.MAX_NO_MOVE * 2:
-        #             print('Stuck detected +')
-        #             self.move_.turn = self.game.wizard_max_turn_angle
-        #             self.move_.strafe_speed = self.game.wizard_strafe_speed
-        #         elif (self.NO_MOVE >= self.MAX_NO_MOVE) and (self.NO_MOVE < self.MAX_NO_MOVE * 2):
-        #             print('Stuck detected -')
-        #             self.move_.turn = -self.game.wizard_max_turn_angle
-        #             self.move_.strafe_speed = -self.game.wizard_strafe_speed
-        #
-        #         self.strategy_time += time.time() - start_strategy_execute
-        #         return None
-        # else:
-        #     self.NO_MOVE = 0
-        # self.PREVIOUS_POS = [self.me.x, self.me.y]
-
         pass
         # low hp run back
         if len(enemies['minion']) == 0 and len(enemies['wizard']) == 0 and len(enemies['building']) == 0:
@@ -276,6 +277,81 @@ class MyStrategy:
 
                 self.strategy_time += time.time() - start_strategy_execute
                 return None
+
+        pass
+
+        # bonus collection: if nobody collects in game
+        if self.BONUS_EXIST:
+            if self.lane == LaneType.TOP:
+                if (self.CURRENT_WAYPOINT_INDEX > 6) and (self.CURRENT_WAYPOINT_INDEX < 11):
+                    if len(enemies['wizard']) > 0:
+                        for enemy_wiz in enemies['wizard']:
+                            if (enemy_wiz.x > 900) and (enemy_wiz.x < 1500):
+                                if (enemy_wiz.y > 900) and (enemy_wiz.y < 1500):
+                                    if enemy_wiz.life > self.me.life:
+                                        self.BONUS_EXIST = False
+
+                    # self.move_to_waypoint(self.BONUS_POINT_TOP, True)
+                    self.move_.turn = self.me.get_angle_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1])
+                    self.move_.speed = self.MAX_SPEED
+                    self.move_.action = ActionType.MAGIC_MISSILE
+                    self.move_.cast_angle = self.me.get_angle_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1])
+                    self.move_.min_cast_distance = 10
+                    if self.me.get_distance_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1]) < 500:
+                        if self.world.bonuses:
+                            for bonus in self.world.bonuses:
+                                if bonus.x == self.BONUS_POINT_TOP[0] and bonus.y == self.BONUS_POINT_TOP[0]:
+                                    self.BONUS_EXIST = True
+                                    break
+                                self.BONUS_EXIST = False
+                        else:
+                            self.BONUS_EXIST = False
+
+                    if self.me.get_distance_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1]) <= 55:
+                        if self.me.statuses:
+                            self.BONUS_COUNT += 1
+                            my_status = self.me.statuses[0]
+                            print(my_status.type, my_status.remaining_duration_ticks)
+
+                    self.strategy_time += time.time() - start_strategy_execute
+                    return None
+
+            if self.lane == LaneType.BOTTOM:
+                if (self.CURRENT_WAYPOINT_INDEX > 6) and (self.CURRENT_WAYPOINT_INDEX < 10):
+                    if len(enemies['wizard']) > 0:
+                        for enemy_wiz in enemies['wizard']:
+                            if (enemy_wiz.x > 2500) and (enemy_wiz.x < 3100):
+                                if (enemy_wiz.y > 2500) and (enemy_wiz.y < 3100):
+                                    if enemy_wiz.life > self.me.life:
+                                        self.BONUS_EXIST = False
+
+                    # self.move_to_waypoint(self.BONUS_POINT_BOT, True)
+                    self.move_.turn = self.me.get_angle_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1])
+                    self.move_.speed = self.MAX_SPEED
+                    self.move_.action = ActionType.MAGIC_MISSILE
+                    self.move_.cast_angle = self.me.get_angle_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1])
+                    self.move_.min_cast_distance = 10
+                    if self.me.get_distance_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1]) < 600:
+                        if self.world.bonuses:
+                            for bonus in self.world.bonuses:
+                                if bonus.x == self.BONUS_POINT_BOT[0] and bonus.y == self.BONUS_POINT_BOT[0]:
+                                    self.BONUS_EXIST = True
+                                    break
+                                self.BONUS_EXIST = False
+                        else:
+                            self.BONUS_EXIST = False
+
+                    if self.me.get_distance_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1]) <= 55:
+                        if self.me.statuses:
+                            my_status = self.me.statuses[0]
+                            print(my_status.type, my_status.remaining_duration_ticks)
+                            self.BONUS_COUNT += 1
+
+                    self.strategy_time += time.time() - start_strategy_execute
+                    return None
+
+        # end bonus collection
+        pass
 
         # bonus collection: simple option
         # if self.strategy_steps % 2501 == 1:
@@ -496,75 +572,115 @@ class MyStrategy:
         self.start_positions.append([300, 3800])
         self.start_positions.append([200, 3700])
 
-        if self.respawn == self.start_positions[0] or self.respawn == self.start_positions[4]:
-            self.waypoints.append([50, map_size - 50])
-            self.waypoints.append([map_size - 3800, map_size - 1100])
-            self.waypoints.append([map_size - 3800, map_size - 1400])
-            self.waypoints.append([map_size - 3750, map_size - 1800])
-            self.waypoints.append([map_size - 3800, map_size - 2200])
-            self.waypoints.append([map_size - 3800, map_size - 2800])
-            self.waypoints.append([map_size - 3800, map_size - 3200])    # wait wave
-            self.waypoints.append([map_size - 3750, map_size - 3500])
-            self.waypoints.append([map_size - 3700, map_size - 3650])
-            self.waypoints.append([map_size - 3500, map_size - 3800])
-            self.waypoints.append([map_size - 3200, map_size - 3800])
-            self.waypoints.append([map_size - 2800, map_size - 3800])
-            self.waypoints.append([map_size - 2400, map_size - 3800])
-            self.waypoints.append([map_size - 2000, map_size - 3800])
-            self.waypoints.append([map_size - 1600, map_size - 3800])
-            self.waypoints.append([map_size - 1200, map_size - 3800])
-            self.waypoints.append([map_size - 800, map_size - 3800])
-            self.waypoints.append([map_size - 200, map_size - 3800])
-            self.lane = LaneType.TOP
-            self.LAST_WAYPOINT_INDEX = 17
-            self.bonus_waypoints.append([500, 500])
-            self.bonus_waypoints.append([800, 800])
-            self.bonus_waypoints.append([1160, 1160])
-        elif self.respawn == self.start_positions[1] or self.respawn == self.start_positions[3]:
-            self.waypoints.append([50, map_size - 50])
-            self.waypoints.append([map_size - 3100, map_size - 200])
-            self.waypoints.append([map_size - 2600, map_size - 200])
-            self.waypoints.append([map_size - 2200, map_size - 200])
-            self.waypoints.append([map_size - 1800, map_size - 200])
-            self.waypoints.append([map_size - 1200, map_size - 200])
-            self.waypoints.append([map_size - 800, map_size - 200])  # stay here
-            self.waypoints.append([map_size - 500, map_size - 350])
-            self.waypoints.append([map_size - 350, map_size - 300])
-            self.waypoints.append([map_size - 200, map_size - 500])
-            self.waypoints.append([map_size - 200, map_size - 800])
-            self.waypoints.append([map_size - 200, map_size - 1200])
-            self.waypoints.append([map_size - 200, map_size - 1600])
-            self.waypoints.append([map_size - 200, map_size - 2000])
-            self.waypoints.append([map_size - 200, map_size - 2400])
-            self.waypoints.append([map_size - 200, map_size - 2800])
-            self.waypoints.append([map_size - 200, map_size - 3200])
-            self.waypoints.append([map_size - 200, map_size - 3800])
-            self.lane = LaneType.BOTTOM
-            self.LAST_WAYPOINT_INDEX = 17
-        elif self.respawn == self.start_positions[2]:
-            self.waypoints.append([50, map_size - 50])
-            self.waypoints.append([map_size - 3800, map_size - 1100])
-            self.waypoints.append([map_size - 3800, map_size - 1400])
-            self.waypoints.append([map_size - 3750, map_size - 1800])
-            self.waypoints.append([map_size - 3800, map_size - 2200])
-            self.waypoints.append([map_size - 3800, map_size - 2800])
-            self.waypoints.append([map_size - 3800, map_size - 3200])    # wait wave
-            self.waypoints.append([map_size - 3750, map_size - 3500])
-            self.waypoints.append([map_size - 3700, map_size - 3650])
-            self.waypoints.append([map_size - 3500, map_size - 3800])
-            self.waypoints.append([map_size - 3200, map_size - 3800])
-            self.waypoints.append([map_size - 2800, map_size - 3800])
-            self.waypoints.append([map_size - 2400, map_size - 3800])
-            self.waypoints.append([map_size - 2000, map_size - 3800])
-            self.waypoints.append([map_size - 1600, map_size - 3800])
-            self.waypoints.append([map_size - 1200, map_size - 3800])
-            self.waypoints.append([map_size - 800, map_size - 3800])
-            self.waypoints.append([map_size - 200, map_size - 3800])
-            self.lane = LaneType.TOP
-            self.LAST_WAYPOINT_INDEX = 17
-            self.bonus_waypoints.append([500, 500])
-            self.bonus_waypoints.append([800, 800])
-            self.bonus_waypoints.append([1160, 1160])
+        self.waypoints_top.append([50, map_size - 50])
+        self.waypoints_top.append([map_size - 3800, map_size - 1100])
+        self.waypoints_top.append([map_size - 3800, map_size - 1400])
+        self.waypoints_top.append([map_size - 3750, map_size - 1800])
+        self.waypoints_top.append([map_size - 3800, map_size - 2200])
+        self.waypoints_top.append([map_size - 3800, map_size - 2800])
+        self.waypoints_top.append([map_size - 3800, map_size - 3200])  # wait wave
+        self.waypoints_top.append([map_size - 3750, map_size - 3500])
+        self.waypoints_top.append([map_size - 3700, map_size - 3650])
+        self.waypoints_top.append([map_size - 3500, map_size - 3800])
+        self.waypoints_top.append([map_size - 3200, map_size - 3800])
+        self.waypoints_top.append([map_size - 2800, map_size - 3800])
+        self.waypoints_top.append([map_size - 2400, map_size - 3800])
+        self.waypoints_top.append([map_size - 2000, map_size - 3800])
+        self.waypoints_top.append([map_size - 1600, map_size - 3800])
+        self.waypoints_top.append([map_size - 1200, map_size - 3800])
+        self.waypoints_top.append([map_size - 800, map_size - 3800])
+        self.waypoints_top.append([map_size - 200, map_size - 3800])
+
+        self.waypoints_bot.append([50, map_size - 50])
+        self.waypoints_bot.append([map_size - 3100, map_size - 200])
+        self.waypoints_bot.append([map_size - 2600, map_size - 200])
+        self.waypoints_bot.append([map_size - 2200, map_size - 200])
+        self.waypoints_bot.append([map_size - 1800, map_size - 200])
+        self.waypoints_bot.append([map_size - 1200, map_size - 200])
+        self.waypoints_bot.append([map_size - 800, map_size - 200])  # stay here
+        self.waypoints_bot.append([map_size - 500, map_size - 350])
+        self.waypoints_bot.append([map_size - 350, map_size - 300])
+        self.waypoints_bot.append([map_size - 200, map_size - 500])
+        self.waypoints_bot.append([map_size - 200, map_size - 800])
+        self.waypoints_bot.append([map_size - 200, map_size - 1200])
+        self.waypoints_bot.append([map_size - 200, map_size - 1600])
+        self.waypoints_bot.append([map_size - 200, map_size - 2000])
+        self.waypoints_bot.append([map_size - 200, map_size - 2400])
+        self.waypoints_bot.append([map_size - 200, map_size - 2800])
+        self.waypoints_bot.append([map_size - 200, map_size - 3200])
+        self.waypoints_bot.append([map_size - 200, map_size - 3800])
+
+        self.LAST_WAYPOINT_INDEX = 17
+
+        # if self.respawn == self.start_positions[0] or self.respawn == self.start_positions[4]:
+        #     self.waypoints.append([50, map_size - 50])
+        #     self.waypoints.append([map_size - 3800, map_size - 1100])
+        #     self.waypoints.append([map_size - 3800, map_size - 1400])
+        #     self.waypoints.append([map_size - 3750, map_size - 1800])
+        #     self.waypoints.append([map_size - 3800, map_size - 2200])
+        #     self.waypoints.append([map_size - 3800, map_size - 2800])
+        #     self.waypoints.append([map_size - 3800, map_size - 3200])    # wait wave
+        #     self.waypoints.append([map_size - 3750, map_size - 3500])
+        #     self.waypoints.append([map_size - 3700, map_size - 3650])
+        #     self.waypoints.append([map_size - 3500, map_size - 3800])
+        #     self.waypoints.append([map_size - 3200, map_size - 3800])
+        #     self.waypoints.append([map_size - 2800, map_size - 3800])
+        #     self.waypoints.append([map_size - 2400, map_size - 3800])
+        #     self.waypoints.append([map_size - 2000, map_size - 3800])
+        #     self.waypoints.append([map_size - 1600, map_size - 3800])
+        #     self.waypoints.append([map_size - 1200, map_size - 3800])
+        #     self.waypoints.append([map_size - 800, map_size - 3800])
+        #     self.waypoints.append([map_size - 200, map_size - 3800])
+        #     self.lane = LaneType.TOP
+        #     self.LAST_WAYPOINT_INDEX = 17
+        #     self.bonus_waypoints.append([500, 500])
+        #     self.bonus_waypoints.append([800, 800])
+        #     self.bonus_waypoints.append([1160, 1160])
+        # elif self.respawn == self.start_positions[1] or self.respawn == self.start_positions[3]:
+        #     self.waypoints.append([50, map_size - 50])
+        #     self.waypoints.append([map_size - 3100, map_size - 200])
+        #     self.waypoints.append([map_size - 2600, map_size - 200])
+        #     self.waypoints.append([map_size - 2200, map_size - 200])
+        #     self.waypoints.append([map_size - 1800, map_size - 200])
+        #     self.waypoints.append([map_size - 1200, map_size - 200])
+        #     self.waypoints.append([map_size - 800, map_size - 200])  # stay here
+        #     self.waypoints.append([map_size - 500, map_size - 350])
+        #     self.waypoints.append([map_size - 350, map_size - 300])
+        #     self.waypoints.append([map_size - 200, map_size - 500])
+        #     self.waypoints.append([map_size - 200, map_size - 800])
+        #     self.waypoints.append([map_size - 200, map_size - 1200])
+        #     self.waypoints.append([map_size - 200, map_size - 1600])
+        #     self.waypoints.append([map_size - 200, map_size - 2000])
+        #     self.waypoints.append([map_size - 200, map_size - 2400])
+        #     self.waypoints.append([map_size - 200, map_size - 2800])
+        #     self.waypoints.append([map_size - 200, map_size - 3200])
+        #     self.waypoints.append([map_size - 200, map_size - 3800])
+        #     self.lane = LaneType.BOTTOM
+        #     self.LAST_WAYPOINT_INDEX = 17
+        # elif self.respawn == self.start_positions[2]:
+        #     self.waypoints.append([50, map_size - 50])
+        #     self.waypoints.append([map_size - 3800, map_size - 1100])
+        #     self.waypoints.append([map_size - 3800, map_size - 1400])
+        #     self.waypoints.append([map_size - 3750, map_size - 1800])
+        #     self.waypoints.append([map_size - 3800, map_size - 2200])
+        #     self.waypoints.append([map_size - 3800, map_size - 2800])
+        #     self.waypoints.append([map_size - 3800, map_size - 3200])    # wait wave
+        #     self.waypoints.append([map_size - 3750, map_size - 3500])
+        #     self.waypoints.append([map_size - 3700, map_size - 3650])
+        #     self.waypoints.append([map_size - 3500, map_size - 3800])
+        #     self.waypoints.append([map_size - 3200, map_size - 3800])
+        #     self.waypoints.append([map_size - 2800, map_size - 3800])
+        #     self.waypoints.append([map_size - 2400, map_size - 3800])
+        #     self.waypoints.append([map_size - 2000, map_size - 3800])
+        #     self.waypoints.append([map_size - 1600, map_size - 3800])
+        #     self.waypoints.append([map_size - 1200, map_size - 3800])
+        #     self.waypoints.append([map_size - 800, map_size - 3800])
+        #     self.waypoints.append([map_size - 200, map_size - 3800])
+        #     self.lane = LaneType.TOP
+        #     self.LAST_WAYPOINT_INDEX = 17
+        #     self.bonus_waypoints.append([500, 500])
+        #     self.bonus_waypoints.append([800, 800])
+        #     self.bonus_waypoints.append([1160, 1160])
 
     def initialize_tick(self, world, game, me, move):
         self.world = world
@@ -572,6 +688,10 @@ class MyStrategy:
         self.me = me
         self.move_ = move
         self.strategy_steps += 1
+
+        if self.strategy_steps % 2400 == 0:
+            self.BONUS_EXIST = True
+            print('Bonus will appear soon')
 
         if self.strategy_steps - 1 + self.game.wizard_min_resurrection_delay_ticks == self.world.tick_index or \
            self.strategy_steps - 1 != self.world.tick_index:
@@ -584,6 +704,16 @@ class MyStrategy:
             self.MOVE_LOW_HP = 0
 
         if self.WAS_DEAD:
+            lane = self.defense_need()
+            if lane != self.lane:
+                self.lane = lane
+                if self.lane == LaneType.TOP:
+                    self.waypoints = self.waypoints_top
+                if self.lane == LaneType.BOTTOM:
+                    self.waypoints = self.waypoints_bot
+                self.CURRENT_WAYPOINT_INDEX = 1
+                print('Switch to defense line %s' % self.lane)
+
             self.CURRENT_WAYPOINT_INDEX = 1
             self.WAS_DEAD = False
 
@@ -661,14 +791,6 @@ class MyStrategy:
             self.CURRENT_WAYPOINT_INDEX += 1
         return self.waypoints[self.CURRENT_WAYPOINT_INDEX]
 
-    def next_bonus_waypoint(self):
-        if self.BONUS_CURRENT == self.BONUS_LAST:
-            return self.bonus_waypoints[self.BONUS_LAST]
-        if self.me.get_distance_to(self.bonus_waypoints[self.BONUS_CURRENT][0],
-                                   self.bonus_waypoints[self.BONUS_CURRENT][1]) < self.WAYPOINT_RADIUS_NEW:
-            self.BONUS_CURRENT += 1
-        return self.bonus_waypoints[self.BONUS_CURRENT]
-
     def last_waypoint(self):
         if self.CURRENT_WAYPOINT_INDEX == 0:
             return self.waypoints[0]
@@ -679,7 +801,7 @@ class MyStrategy:
 
     def move_to_waypoint(self, waypoint, direction):
         self.debug_next_waypoint = waypoint
-        if self.strategy_steps % 20 == 0:
+        if self.strategy_steps % 50 == 0:
             print('Waypoint %s, index %s' % (waypoint, self.CURRENT_WAYPOINT_INDEX))
 
         if direction:
@@ -687,7 +809,7 @@ class MyStrategy:
         else:
             next_milestone = self.path_finder_backward(waypoint=waypoint)
 
-        if self.strategy_steps % 20 == 0:
+        if self.strategy_steps % 50 == 0:
             print('Milestone %s' % next_milestone)
         if next_milestone:
             self.debug_next_milestone = next_milestone
@@ -957,6 +1079,13 @@ class MyStrategy:
                 v_name = (int(next_node) // 100) - 1
                 h_name = int(next_node) % 100
                 next_coords = net_2d[v_name][h_name]
+
+                self.debug_view_path = []
+                for element in next_path:
+                    v_name = (int(element) // 100) - 1
+                    h_name = int(element) % 100
+                    xy = net_2d[v_name][h_name]
+                    self.debug_view_path.append(xy)
                 return next_coords
             else:
                 return waypoint
@@ -1075,6 +1204,13 @@ class MyStrategy:
                 v_name = (int(next_node) // 100) - 1
                 h_name = int(next_node) % 100
                 next_coords = net_2d[v_name][h_name]
+
+                self.debug_view_path = []
+                for element in next_path:
+                    v_name = (int(element) // 100) - 1
+                    h_name = int(element) % 100
+                    xy = net_2d[v_name][h_name]
+                    self.debug_view_path.append(xy)
                 return next_coords
             else:
                 return waypoint
@@ -1172,4 +1308,56 @@ class MyStrategy:
                 print(dodge_time)
 
         return False
+
+    def get_a_line_to_push(self):
+        we = []
+        for target in self.world.wizards:
+            if target.faction == self.me.faction:
+                if target.x == self.me.x and target.y == self.me.y:
+                    continue
+                we.append(target)
+
+        top_number, bot_number = 0, 0
+        if we:
+            for target in we:
+                if target.x < 330 and target.y > 3000:
+                    top_number += 1
+                if target.x > 700 and target.y > 3650:
+                    bot_number += 2
+        if top_number >= self.MIN_PUSH_AMOUNT:
+            return LaneType.TOP
+        if bot_number >= self.MIN_PUSH_AMOUNT:
+            return LaneType.BOTTOM
+        return LaneType.TOP
+
+    def defense_need(self):
+        towers = []
+        for tower in self.world.buildings:
+            if tower.faction == self.me.faction:
+                if tower.x == 400:
+                    continue
+                towers.append(tower)
+
+        if len(towers) > 3:
+            return None
+
+        top_towers, bot_towers = 0, 0
+        for tower in towers:
+            if tower.x < 360:
+                top_towers += 1
+            elif tower.y > 3640:
+                bot_towers += 1
+
+        if top_towers == 0:
+            return LaneType.TOP
+        if bot_towers == 0:
+            return LaneType.BOTTOM
+        return self.lane
+
+
+
+
+
+
+
 
