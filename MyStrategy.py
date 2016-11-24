@@ -288,7 +288,7 @@ class MyStrategy:
         # bonus collection: if nobody collects in game
         if self.BONUS_EXIST:
             if self.lane == LaneType.TOP:
-                if (self.CURRENT_WAYPOINT_INDEX >= 6) and (self.CURRENT_WAYPOINT_INDEX <= 11):
+                if (self.CURRENT_WAYPOINT_INDEX > 6) and (self.CURRENT_WAYPOINT_INDEX < 11):
                     if len(enemies['wizard']) > 0:
                         for enemy_wiz in enemies['wizard']:
                             if (enemy_wiz.x > 1100) and (enemy_wiz.x < 1300) and (enemy_wiz.y > 1100) and (enemy_wiz.y < 1300):
@@ -321,7 +321,7 @@ class MyStrategy:
                     return None
 
             if self.lane == LaneType.BOTTOM:
-                if (self.CURRENT_WAYPOINT_INDEX >= 6) and (self.CURRENT_WAYPOINT_INDEX <= 11):
+                if (self.CURRENT_WAYPOINT_INDEX > 6) and (self.CURRENT_WAYPOINT_INDEX < 11):
                     if len(enemies['wizard']) > 0:
                         for enemy_wiz in enemies['wizard']:
                             if (enemy_wiz.x > 2700) and (enemy_wiz.x < 2900) and (enemy_wiz.y > 2700) and (enemy_wiz.y < 2900):
