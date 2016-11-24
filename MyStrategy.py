@@ -14,7 +14,7 @@ import random
 import math
 import time
 
-
+# debug = False
 try:
     from debug_client import DebugClient
 except:
@@ -132,6 +132,7 @@ class MyStrategy:
     debug_next_milestone = [400, 3600]
     debug_next_waypoint = [400, 3600]
     debug_view_path = []
+    debug_obstacles = []
 
     # game analisys parameters
     MIN_PUSH_AMOUNT = 2
@@ -146,6 +147,10 @@ class MyStrategy:
                 for i in range(2, len(self.debug_view_path)):
                     dbg.line(self.debug_view_path[i-1][0], self.debug_view_path[i-1][1],
                              self.debug_view_path[i][0], self.debug_view_path[i][1], (0.5, 0.5, 0.5))
+
+            if len(self.debug_obstacles) > 0:
+                for target in self.debug_obstacles:
+                    dbg.circle(target.x, target.y, target.radius, (0, 0, 0))
 
     def move(self, me: Wizard, world: World, game: Game, move: Move):
 
@@ -996,7 +1001,8 @@ class MyStrategy:
         for net_y in range(int(min(lt[1], rt[1]) + step), int(max(lb[1], rb[1]) - step), int(step * 2)):
             line_x = []
             for net_x in range(int(min(lb[0], lt[0]) + step), int(max(rb[0], rt[0]) - step), int(step * 2)):
-                line_x.append([net_x, net_y])
+                line_x.append([net_x + step, net_y + step])
+                # line_x.append([net_x + step, net_y + step])
             net_2d.append(line_x)
 
         # get obstacles
@@ -1004,6 +1010,7 @@ class MyStrategy:
             int(min(lb[0], lt[0]) + step), int(max(rb[0], rt[0]) - step),
             int(min(lt[1], rt[1]) + step), int(max(lb[1], rb[1]) - step)])
 
+        self.debug_obstacles = obstacles
         # for obstacle in obstacles:
         #     if obstacle.faction == self.me.faction:
         #         print(obstacle.x, obstacle.y)
@@ -1130,13 +1137,15 @@ class MyStrategy:
         for net_y in range(int(min(lt[1], rt[1]) + step), int(max(lb[1], rb[1]) - step), int(step * 2)):
             line_x = []
             for net_x in range(int(min(lb[0], lt[0]) + step), int(max(rb[0], rt[0]) - step), int(step * 2)):
-                line_x.append([net_x, net_y])
+                line_x.append([net_x + step, net_y + step])
             net_2d.append(line_x)
 
         # get obstacles
         obstacles = self.get_obstacles_in_zone([
             int(min(lb[0], lt[0]) + step), int(max(rb[0], rt[0]) - step),
             int(min(lt[1], rt[1]) + step), int(max(lb[1], rb[1]) - step)])
+
+        self.debug_obstacles = obstacles
 
         # for obstacle in obstacles:
         #     if obstacle.faction == self.me.faction:
@@ -1237,8 +1246,9 @@ class MyStrategy:
     def is_obstacle_in_node(target_cell, obstacles, cell_radius):
         for obstacle in obstacles:
             squared_dist = (target_cell[0] - obstacle.x) ** 2 + (target_cell[1] - obstacle.y) ** 2
-            if squared_dist <= cell_radius ** 2:
+            if squared_dist <= 1.42 * cell_radius ** 2:
                 return True
+            # if (obstacle.x + obstacle.radius < target_cell[0] - )
         return False
 
     @staticmethod
@@ -1353,11 +1363,3 @@ class MyStrategy:
         if bot_towers == 0:
             return LaneType.BOTTOM
         return self.lane
-
-
-
-
-
-
-
-

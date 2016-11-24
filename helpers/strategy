@@ -1,4 +1,4 @@
-STRATEGY v0.1:  Completed!
+STRATEGY v1:  Completed!
   +1. move to top line with creeps
       - attack enemy creeps
   +2. soak exp with minions (attack)
@@ -11,7 +11,7 @@ STRATEGY v0.1:  Completed!
   +7. check my hp level
 
 
-STRATEGY v0.2: Completed!
+STRATEGY v2: Completed!
   +1. vivid path script
   +2. back if enemies here
     - only enemy minions
@@ -19,7 +19,7 @@ STRATEGY v0.2: Completed!
     - tower damage on me, ally minions close
 
 
-STRATEGY v0.3: Completed!
+STRATEGY v3: Completed!
   +1. path finder v1
     - grid
     - obstacles
@@ -31,11 +31,11 @@ STRATEGY v0.3: Completed!
   +4. stuck fix at [200, 200]
 
 
-STRATEGY v0.4: Completed!
+STRATEGY v4: Completed!
   some tweaks in parameters (waypoints, waypoint_size)
 
 
-STRATEGY v0.5: Completed!
+STRATEGY v5: Completed!
   +1. go back correctly if enjured
   +2. stop go forward if enemies in visible range
   +3. if attacked by minion move back
@@ -44,7 +44,7 @@ STRATEGY v0.5: Completed!
   +6. check the strategy for the enemies
 
 
-STRATEGY v0.6: Completed!
+STRATEGY v6: Completed!
   +1. Refactor all from the beginning (simple)
   +2. fix bug with whirlwind close to [200, 200]
   +3. check if stuck
@@ -57,7 +57,7 @@ STRATEGY v0.6: Completed!
   +10. attack if stuck in place (probably trees in this direction)
 
 
-STRATEGY v0.7: Completed!
+STRATEGY v7: Completed!
 +FLAW 1: waypoint system
 +FLAW 2: wait close to minion wave
 +FLAW 3: use waypoint system for low hp movement
@@ -76,15 +76,15 @@ STRATEGY v0.7: Completed!
   +?11. bug with close to enemy t-2?
 
 
-STRATEGY v0.8: Completed!
+STRATEGY v8: Completed!
   +1. fix bug with no fire a missile, because of the angle to left to much
 
 
-STRATEGY v0.9: Completed!
+STRATEGY v9: Completed!
   +1. fix bug with waypoints in TOP
 
 
-STRATEGY v1.0: Completed!
+STRATEGY v10: Completed!
 -FLAW 1: simple bonus collection
 +FLAW 2: time exceed the limit:
             35x4@20  = 375  35x6@10 = 497 35x2@10 = 411 35x2@10 = [381, 418, 347]
@@ -123,11 +123,11 @@ STRATEGY v1.0: Completed!
   +8. add 400 distance to all lines
 
 
-STRATEGY v1.1: - v10 is a total flaw, rollback to v9
+STRATEGY v11: - v10 is a total flaw, rollback to v9
   v9 old version
 
 
-STRATEGY v1.2: looking up for a flaw in v1.0 - Completed! I hope
+STRATEGY v12: looking up for a flaw in v1.0 - Completed! I hope
 p1 with stuck prototype: 2171 Time bot: 13.33 s, units profiler: 3.53, graph: 30.55, BFS: 10.27 D=2
                        : 2302 Time bot: 12.92 s, units profiler: 4.11, graph: 28.32, BFS: 10.53 D=0
 
@@ -140,7 +140,7 @@ p5 without             : 3084 Time bot: 10.77 s, units profiler: 3.61, graph: 39
   +1. probably new stuck function activates and ends the tick. So nothing usefull was archived
 
 
-STRATEGY v1.3: Completed!
+STRATEGY v13: Completed!
 +FLAW 1: optimisation of graph tree speed - will wait for R2, current speed is OK (mean: 70s, limit: 210)
 +FLAW 3: stuck detection - priority, but not vital for now
 
@@ -149,7 +149,7 @@ STRATEGY v1.3: Completed!
   3. pathfinder params change to 35x4@35
 
 
-STRATEGY v1.4: Completed!
+STRATEGY v14: Completed!
 +FLAW 1: simple bonus collection!!! - need this badly -
 +FLAW 2: attack with teammates
 +FLAW 3: defence the base
@@ -160,12 +160,22 @@ STRATEGY v1.4: Completed!
     +4. check if our base need help and change line + defence
     +?5. bug with waypoints
 
+- v9-14 competition: games - 6
+v14 : 14 + 11 + 17 + 19 + 6  + 18             S = 85
+v13 : 12 + 11 + 17 + 11 + 13 + 16             S = 80
+v12 : 17 + 12 + 11 + 12 + 11 + 3              S = 66
+v11 : 6  + 12 + 4  + 3  + 13 + 10             S = 48
+ v9 : 5  + 8  + 6  + 9  + 12 + 8              S = 48
 
 
-STRATEGY v1.5:
-  FEATURE: Li algorithm (wave algorithm)
-  FEATURE: Tangent algorithm
-  FEATURE: Local-runner visualisator
+STRATEGY v15:
+  +1. fix graph to center node
+  +2. add pathfinder to bonus
+  3. find a tricky bug - found
+
+STRATEGY v16:
+  FEATURE: Li algorithm (wave algorithm) or A*
+  FEATURE: Tangent movement
   FEATURE: Danger Field algorithm
 
   1. check if my base need help
