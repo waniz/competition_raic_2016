@@ -168,10 +168,10 @@ v11 : 6  + 12 + 4  + 3  + 13 + 10             S = 48
  v9 : 5  + 8  + 6  + 9  + 12 + 8              S = 48
 
 
-STRATEGY v15:
+STRATEGY v15: Completed!
   +1. fix graph to center node
   +2. add pathfinder to bonus
-  3. find a tricky bug - found
+  +3. find a tricky bug - found
 
 STRATEGY v16:
   FEATURE: Li algorithm (wave algorithm) or A*
