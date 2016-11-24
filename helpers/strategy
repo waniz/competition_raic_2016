@@ -149,15 +149,16 @@ STRATEGY v1.3: Completed!
   3. pathfinder params change to 35x4@35
 
 
-STRATEGY v1.4:
+STRATEGY v1.4: Completed!
 +FLAW 1: simple bonus collection!!! - need this badly -
 +FLAW 2: attack with teammates
-FLAW 3: defence the base
++FLAW 3: defence the base
 
     +1. simple bonus collection if nobody collects
     +2. add optimisation to go back after bonus was picked
     +3. check which line we are pushing at start - and help
-    4. check if our base need help and change line + defence
+    +4. check if our base need help and change line + defence
+    +?5. bug with waypoints
 
 
 
