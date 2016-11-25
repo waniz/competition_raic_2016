@@ -76,9 +76,9 @@ class MyStrategy:
     ATTACK_RANGE = 500
     ALLY_RANGE = 600
     LOW_HP_ENEMY_SWITCH = 12 * 2                # 12 - wizard_damage
-    PATH_FINDING_GRID = 35 * 8                  # 35 - wizard_radius
+    PATH_FINDING_GRID = 35 * 6                  # 35 - wizard_radius
     PATH_FINDING_CELL_RADIUS = 35               # x2
-    MAX_SPEED = 4
+
     # stay in range of attack
     ENEMY_CLOSE_RANGE = 400
     ENEMY_IN_RANGE_TICK = 0                     # 50
@@ -207,8 +207,7 @@ class MyStrategy:
                                                                    round(time.time() - self.bot_time, 2)))
             print('Time bot: %s s, units profiler: %s, graph: %s, BFS: %s' % (round(self.strategy_time, 2),
                   round(self.units_profile, 2), round(self.graph_profile, 2), round(self.bfs_profile, 2)))
-            if self.strategy_steps >= 18800:
-                print('Death counter: %s Bonus counter: %s' % (self.DEATH_COUNT, self.BONUS_COUNT))
+            print('Death counter: %s Bonus counter: %s' % (self.DEATH_COUNT, self.BONUS_COUNT))
             print('----------------')
 
         # go back at the beginning for not being stuck with the others
@@ -289,18 +288,20 @@ class MyStrategy:
         if self.BONUS_EXIST:
             if self.lane == LaneType.TOP:
                 if (self.CURRENT_WAYPOINT_INDEX > 6) and (self.CURRENT_WAYPOINT_INDEX < 11):
+                    print('go to bonus 1')
                     if len(enemies['wizard']) > 0:
                         for enemy_wiz in enemies['wizard']:
                             if (enemy_wiz.x > 1100) and (enemy_wiz.x < 1300) and (enemy_wiz.y > 1100) and (enemy_wiz.y < 1300):
                                 if enemy_wiz.life > self.me.life:
                                     self.BONUS_EXIST = False
 
-                    self.move_to_waypoint(self.BONUS_POINT_TOP, True)
-                    # self.move_.turn = self.me.get_angle_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1])
-                    # self.move_.speed = self.MAX_SPEED
+                    # self.move_to_waypoint(self.BONUS_POINT_TOP, True)
+                    print('go to bonus 2')
+                    self.move_.turn = self.me.get_angle_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1])
+                    self.move_.speed = self.game.wizard_forward_speed
                     self.move_.action = ActionType.MAGIC_MISSILE
                     self.move_.cast_angle = self.me.get_angle_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1])
-                    self.move_.min_cast_distance = 10
+                    self.move_.min_cast_distance = 400
                     if self.me.get_distance_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1]) < 500:
                         if self.world.bonuses:
                             for bonus in self.world.bonuses:
@@ -328,12 +329,12 @@ class MyStrategy:
                                 if enemy_wiz.life > self.me.life:
                                     self.BONUS_EXIST = False
 
-                    self.move_to_waypoint(self.BONUS_POINT_BOT, True)
-                    # self.move_.turn = self.me.get_angle_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1])
-                    # self.move_.speed = self.MAX_SPEED
+                    # self.move_to_waypoint(self.BONUS_POINT_BOT, True)
+                    self.move_.turn = self.me.get_angle_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1])
+                    self.move_.speed = self.game.wizard_forward_speed
                     self.move_.action = ActionType.MAGIC_MISSILE
                     self.move_.cast_angle = self.me.get_angle_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1])
-                    self.move_.min_cast_distance = 10
+                    self.move_.min_cast_distance = 400
                     if self.me.get_distance_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1]) < 500:
                         if self.world.bonuses:
                             for bonus in self.world.bonuses:
@@ -816,13 +817,13 @@ class MyStrategy:
             self.debug_next_milestone = next_milestone
             angle = self.me.get_angle_to(next_milestone[0], next_milestone[1])
             self.move_.turn = angle
-            self.move_.speed = self.MAX_SPEED
+            self.move_.speed = self.game.wizard_forward_speed
         else:
             print('No answer from pathfinder!')
             if waypoint:
                 angle = self.me.get_angle_to(waypoint[0], waypoint[1])
                 self.move_.turn = angle
-                self.move_.speed = self.MAX_SPEED
+                self.move_.speed = self.game.wizard_forward_speed
             else:
                 print('WTF?? no waypoint send to --move_to_waypoint function--')
 
