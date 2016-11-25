@@ -173,7 +173,16 @@ STRATEGY v15: Completed!
   +2. add pathfinder to bonus
   +3. find a tricky bug - found
 
+
 STRATEGY v16:
+  1. if T2 tower was pushed, go back, pick up a bonus and change line
+  2. if I am at position after transition to bonus, go back and collect bonus
+  3. add Mid Line
+  4. bug with 8 position at center
+  5. hardcode only top?
+
+
+STRATEGY v17:
   FEATURE: Li algorithm (wave algorithm) or A*
   FEATURE: Tangent movement
   FEATURE: Danger Field algorithm
@@ -182,7 +191,6 @@ STRATEGY v16:
   2. check if we push an enemy base
   3. monitor base HP, monitor our towers, enemy towers if in vision
   4. move to defence
-  5. change line
   6. check if no enemy wizard at line, where everybody is
   7. waypoints for defence
   8. waypoints for attack
