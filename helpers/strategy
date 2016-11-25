@@ -197,8 +197,17 @@ STRATEGY v20: Completed!
   +3. add mid
   +4. add atk if low hp
 
+v18-20 competition:
+  v20: 40
+  v19: 45
+  v18: 33
 
-STRATEGY v21:
+
+STRATEGY v21: Completed!
+  1. try to go alone, remove hardcoded bottom line only
+
+
+STRATEGY v22:
   FEATURE: Li algorithm (wave algorithm) or A*
   FEATURE: Tangent movement
   FEATURE: Danger Field algorithm
@@ -212,7 +221,3 @@ STRATEGY v21:
   8. waypoints for attack
   9. respawn position check
   10. Backward / forward trouble if position on enemy side. Check pathfinding directions
-
-
-  Watch list:
-  http://russianaicup.ru/game/view/44601

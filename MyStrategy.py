@@ -136,7 +136,7 @@ class MyStrategy:
     debug_obstacles = []
 
     # game analisys parameters
-    MIN_PUSH_AMOUNT = 2
+    MIN_PUSH_AMOUNT = 1
 
     def visual_debugger(self):
         with debug.post() as dbg:
@@ -168,7 +168,7 @@ class MyStrategy:
         else:
             if self.strategy_steps == 300:
                 self.lane = self.get_a_line_to_push()
-                self.lane = LaneType.BOTTOM
+
                 if self.lane == LaneType.TOP:
                     self.waypoints = self.waypoints_top
                 if self.lane == LaneType.BOTTOM:
