@@ -1330,9 +1330,9 @@ class MyStrategy:
                     top_number += 1
                 if target.x > 700 and target.y > 3650:
                     bot_number += 2
-        if top_number >= self.MIN_PUSH_AMOUNT:
+        if top_number < self.MIN_PUSH_AMOUNT:
             return LaneType.TOP
-        if bot_number >= self.MIN_PUSH_AMOUNT:
+        if bot_number < self.MIN_PUSH_AMOUNT:
             return LaneType.BOTTOM
         return LaneType.TOP
 
