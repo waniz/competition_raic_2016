@@ -175,39 +175,22 @@ STRATEGY v15: Completed!
 
 
 STRATEGY v16: Completed!
-  +1. change
+  +1. fixes
 
 
 STRATEGY v17: Completed!
-  +1. fix waypoint
+  +1. waypoint radius fix
 
 
-STRATEGY v18: Completed!
-  +1. switch to lane if <2
+STRATEGY v18:
+  1. if T2 tower was pushed, go back, pick up a bonus and change line
+  2. if I am at position after transition to bonus, go back and collect bonus
+  3. add Mid Line
+  4. bug with 8 position at center
+  5. hardcode only top?
 
 
-STRATEGY v19: Completed!
-  +1. fix bug with rotate if bonus has to be picked
-  +2. switch to simple go to bonus option
-
-
-STRATEGY v20: Completed!
-  +1. go back to collect bonus from 11-12
-  +2. defense base
-  +3. add mid
-  +4. add atk if low hp
-
-v18-20 competition:
-  v20: 40
-  v19: 45
-  v18: 33
-
-
-STRATEGY v21: Completed!
-  1. try to go alone, remove hardcoded bottom line only
-
-
-STRATEGY v22:
+STRATEGY v19:
   FEATURE: Li algorithm (wave algorithm) or A*
   FEATURE: Tangent movement
   FEATURE: Danger Field algorithm
@@ -221,3 +204,7 @@ STRATEGY v22:
   8. waypoints for attack
   9. respawn position check
   10. Backward / forward trouble if position on enemy side. Check pathfinding directions
+
+
+  Watch list:
+  http://russianaicup.ru/game/view/44601

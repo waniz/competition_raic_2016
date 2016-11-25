@@ -162,20 +162,23 @@ class MyStrategy:
             self.initialize_strategy(game, me)
         self.initialize_tick(world=world, game=game, me=me, move=move)
 
-        # choose TOP or BOT
-        if self.strategy_steps < 300:
-            return None
-        else:
-            if self.strategy_steps == 300:
-                self.lane = self.get_a_line_to_push()
+        # # choose TOP or BOT
+        # if self.strategy_steps < 300:
+        #     return None
+        # else:
+        #     if self.strategy_steps == 300:
+        #         self.lane = self.get_a_line_to_push()
+        #
+        #         if self.lane == LaneType.TOP:
+        #             self.waypoints = self.waypoints_top
+        #         if self.lane == LaneType.BOTTOM:
+        #             self.waypoints = self.waypoints_bot
+        #         if self.lane == LaneType.MIDDLE:
+        #             self.waypoints = self.waypoints_mid
+        #         print('Lane is %s' % self.lane)
 
-                if self.lane == LaneType.TOP:
-                    self.waypoints = self.waypoints_top
-                if self.lane == LaneType.BOTTOM:
-                    self.waypoints = self.waypoints_bot
-                if self.lane == LaneType.MIDDLE:
-                    self.waypoints = self.waypoints_mid
-                print('Lane is %s' % self.lane)
+        self.lane = LaneType.TOP
+        self.waypoints = self.waypoints_top
 
         # get all tick information:
         units_timer = time.time()
@@ -319,8 +322,7 @@ class MyStrategy:
                     if len(enemies['wizard']) > 0:
                         for enemy_wiz in enemies['wizard']:
                             if (enemy_wiz.x > 1100) and (enemy_wiz.x < 1300) and (enemy_wiz.y > 1100) and (enemy_wiz.y < 1300):
-                                if enemy_wiz.life > self.me.life:
-                                    self.BONUS_EXIST = False
+                                self.BONUS_EXIST = False
 
                     # self.move_to_waypoint(self.BONUS_POINT_TOP, True)
                     self.move_.turn = self.me.get_angle_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1])
@@ -393,8 +395,7 @@ class MyStrategy:
                     if len(enemies['wizard']) > 0:
                         for enemy_wiz in enemies['wizard']:
                             if (enemy_wiz.x > 2700) and (enemy_wiz.x < 2900) and (enemy_wiz.y > 2700) and (enemy_wiz.y < 2900):
-                                if enemy_wiz.life > self.me.life:
-                                    self.BONUS_EXIST = False
+                                self.BONUS_EXIST = False
 
                     # self.move_to_waypoint(self.BONUS_POINT_BOT, True)
                     self.move_.turn = self.me.get_angle_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1])
@@ -1472,9 +1473,6 @@ class MyStrategy:
                 if tower.x == 400:
                     continue
                 towers.append(tower)
-
-        if len(towers) > 3:
-            return None
 
         top_towers, bot_towers, mid_towers = 0, 0, 0
         for tower in towers:
