@@ -167,10 +167,13 @@ class MyStrategy:
         else:
             if self.strategy_steps == 300:
                 self.lane = self.get_a_line_to_push()
+                self.lane = LaneType.MIDDLE
                 if self.lane == LaneType.TOP:
                     self.waypoints = self.waypoints_top
                 if self.lane == LaneType.BOTTOM:
                     self.waypoints = self.waypoints_bot
+                if self.lane == LaneType.MIDDLE:
+                    self.waypoints = self.waypoints_mid
 
         # get all tick information:
         units_timer = time.time()
@@ -288,7 +291,6 @@ class MyStrategy:
         if self.BONUS_EXIST:
             if self.lane == LaneType.TOP:
                 if (self.CURRENT_WAYPOINT_INDEX > 6) and (self.CURRENT_WAYPOINT_INDEX < 11):
-                    print('go to bonus 1')
                     if len(enemies['wizard']) > 0:
                         for enemy_wiz in enemies['wizard']:
                             if (enemy_wiz.x > 1100) and (enemy_wiz.x < 1300) and (enemy_wiz.y > 1100) and (enemy_wiz.y < 1300):
@@ -296,7 +298,6 @@ class MyStrategy:
                                     self.BONUS_EXIST = False
 
                     # self.move_to_waypoint(self.BONUS_POINT_TOP, True)
-                    print('go to bonus 2')
                     self.move_.turn = self.me.get_angle_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1])
                     self.move_.speed = self.game.wizard_forward_speed
                     self.move_.action = ActionType.MAGIC_MISSILE
@@ -612,6 +613,24 @@ class MyStrategy:
         self.waypoints_bot.append([map_size - 200, map_size - 2800])
         self.waypoints_bot.append([map_size - 200, map_size - 3100])
 
+        self.waypoints_mid.append([50, map_size - 50])
+        self.waypoints_mid.append([map_size - 3800, map_size - 200])
+        self.waypoints_mid.append([map_size - 3800, map_size - 800])
+        self.waypoints_mid.append([map_size - 3200, map_size - 800])
+        self.waypoints_mid.append([map_size - 3000, map_size - 800])
+        self.waypoints_mid.append([map_size - 2850, map_size - 1000])
+        self.waypoints_mid.append([map_size - 2750, map_size - 1250])
+        self.waypoints_mid.append([map_size - 2500, map_size - 1500])
+        self.waypoints_mid.append([map_size - 2250, map_size - 1750])
+        self.waypoints_mid.append([map_size - 2000, map_size - 2000])
+        self.waypoints_mid.append([map_size - 1750, map_size - 2000])
+        self.waypoints_mid.append([map_size - 1500, map_size - 2500])
+        self.waypoints_mid.append([map_size - 1250, map_size - 2750])
+        self.waypoints_mid.append([map_size - 1000, map_size - 3000])
+        self.waypoints_mid.append([map_size - 800, map_size - 3200])
+        self.waypoints_mid.append([map_size - 400, map_size - 3600])
+        self.waypoints_mid.append([map_size - 200, map_size - 3800])
+
         self.LAST_WAYPOINT_INDEX = 16
 
         # if self.respawn == self.start_positions[0] or self.respawn == self.start_positions[4]:
@@ -713,6 +732,8 @@ class MyStrategy:
                     self.waypoints = self.waypoints_top
                 if self.lane == LaneType.BOTTOM:
                     self.waypoints = self.waypoints_bot
+                if self.lane == LaneType.MIDDLE:
+                    self.waypoints = self.waypoints_mid
                 self.CURRENT_WAYPOINT_INDEX = 1
                 print('Switch to defense line %s' % self.lane)
 
@@ -1348,15 +1369,20 @@ class MyStrategy:
         if len(towers) > 3:
             return None
 
-        top_towers, bot_towers = 0, 0
+        top_towers, bot_towers, mid_towers = 0, 0, 0
         for tower in towers:
             if tower.x < 360:
                 top_towers += 1
             elif tower.y > 3640:
                 bot_towers += 1
+            if tower.x == 902:
+                mid_towers += 1
 
+        if mid_towers == 0:
+            return LaneType.MIDDLE
         if top_towers == 0:
             return LaneType.TOP
         if bot_towers == 0:
             return LaneType.BOTTOM
+
         return self.lane
