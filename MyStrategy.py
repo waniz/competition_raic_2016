@@ -71,7 +71,6 @@ class MyStrategy:
     move_ = None
 
     # constants section
-    # WAYPOINT_RADIUS = 250
     LOW_HP_FACTOR = [0.7, 0.72]
     ATTACK_RANGE = 500
     ALLY_RANGE = 600
@@ -100,7 +99,7 @@ class MyStrategy:
     LAST_WAYPOINT_INDEX = 0
     WAIT_WAYPOINT_INDEX = 6
     MOVE_FORWARD = True
-    WAYPOINT_RADIUS_NEW = 70
+    WAYPOINT_RADIUS_NEW = 85
     WAS_DEAD = True
     DEATH_COUNT = 0
 
@@ -140,7 +139,7 @@ class MyStrategy:
 
     def visual_debugger(self):
         with debug.post() as dbg:
-            dbg.text(self.me.x, self.me.y - 35, 'x: %s, y: %s' % (round(self.me.x), round(self.me.y)), (0, 0, 0))
+            dbg.text(self.me.x - 45, self.me.y + 35, 'x: %s, y: %s' % (round(self.me.x), round(self.me.y)), (0, 0, 0))
             dbg.line(self.me.x, self.me.y, self.debug_next_milestone[0], self.debug_next_milestone[1], (0, 0, 0))
             dbg.line(self.me.x, self.me.y, self.debug_next_waypoint[0], self.debug_next_waypoint[1], (0, 0.5, 1))
 
@@ -152,6 +151,19 @@ class MyStrategy:
             if len(self.debug_obstacles) > 0:
                 for target in self.debug_obstacles:
                     dbg.circle(target.x, target.y, target.radius, (0, 0, 0))
+
+            # road on top map
+            dbg.line(100, 0, 100, 3500, (0, 0, 1))
+            dbg.line(300, 800, 300, 3500, (0, 0, 1))
+            dbg.line(300, 800, 800, 800, (0, 0, 1))
+            dbg.line(100, 800, 100, 800, (0, 0, 1))
+            dbg.line(100, 100, 3500, 100, (0, 0, 1))
+            dbg.line(800, 300, 3500, 300, (0, 0, 1))
+            dbg.line(800, 800, 800, 300, (0, 0, 1))
+
+            for index in range(0, self.LAST_WAYPOINT_INDEX):
+                dbg.circle(self.waypoints[index][0], self.waypoints[index][1], self.WAYPOINT_RADIUS_NEW, (0.5, 0.5, 0.5))
+                dbg.text(self.waypoints[index][0], self.waypoints[index][1], '%s, x: %s, y: %s' % (index, self.waypoints[index][0], self.waypoints[index][1]), (0.5, 0.5, 0.5))
 
     def move(self, me: Wizard, world: World, game: Game, move: Move):
 
@@ -252,18 +264,9 @@ class MyStrategy:
                     self.move_.turn = self.game.wizard_max_turn_angle
                     self.move_.strafe_speed = self.game.wizard_strafe_speed
                     if my_target:
-                        distance = self.me.get_distance_to(my_target.x, my_target.y)
-                        if distance <= self.me.cast_range:
-                            if self.me.remaining_cooldown_ticks_by_action[2] <= 3:
-                                angle = self.me.get_angle_to(my_target.x, my_target.y)
-                                move.turn = angle
-                                if abs(angle) < game.staff_sector / 2:
-                                    move.action = ActionType.MAGIC_MISSILE
-                                    move.cast_angle = angle
-                                    move.min_cast_distance = distance - my_target.radius + game.magic_missile_radius
-
-                                self.strategy_time += time.time() - start_strategy_execute
-                                return None
+                        if self.attack_target(my_target):
+                            self.strategy_time += time.time() - start_strategy_execute
+                            return None
                     return None
         else:
             self.NO_MOVE = 0
@@ -280,16 +283,7 @@ class MyStrategy:
                     print('go back - low hp: x: %s y: %s for %s ticks' %
                           (round(self.me.x, 1), round(self.me.y, 1), self.MOVE_LOW_HP))
                 if my_target:
-                    distance = self.me.get_distance_to(my_target.x, my_target.y)
-                    if distance <= self.me.cast_range:
-                        if self.me.remaining_cooldown_ticks_by_action[2] == 0:
-                            angle = self.me.get_angle_to(my_target.x, my_target.y)
-                            move.turn = angle
-                            if abs(angle) < game.staff_sector / 2:
-                                move.action = ActionType.MAGIC_MISSILE
-                                move.cast_angle = angle
-                                move.min_cast_distance = distance - my_target.radius + game.magic_missile_radius
-
+                    self.attack_target(my_target)
         else:
             if self.me.life < self.me.max_life * self.LOW_HP_FACTOR[0]:
                 if self.me.life < self.me.max_life * self.LOW_HP_FACTOR[1]:
@@ -300,25 +294,15 @@ class MyStrategy:
                         print('go back - low hp: x: %s y: % s' % (round(self.me.x, 1), round(self.me.y, 1)))
                     self.move_to_waypoint(self.last_waypoint(), False)
                     if my_target:
-                        distance = self.me.get_distance_to(my_target.x, my_target.y)
-                        if distance <= self.me.cast_range:
-                            if self.me.remaining_cooldown_ticks_by_action[2] == 0:
-                                angle = self.me.get_angle_to(my_target.x, my_target.y)
-                                move.turn = angle
-                                if abs(angle) < game.staff_sector / 2:
-                                    move.action = ActionType.MAGIC_MISSILE
-                                    move.cast_angle = angle
-                                    move.min_cast_distance = distance - my_target.radius + game.magic_missile_radius
-
-                self.strategy_time += time.time() - start_strategy_execute
-                return None
-
+                        if self.attack_target(my_target):
+                            self.strategy_time += time.time() - start_strategy_execute
+                            return None
         pass
 
         # bonus collection: if nobody collects in game
         if self.BONUS_EXIST:
             if self.lane == LaneType.TOP:
-                if (self.CURRENT_WAYPOINT_INDEX > 6) and (self.CURRENT_WAYPOINT_INDEX < 11):
+                if (self.CURRENT_WAYPOINT_INDEX > 7) and (self.CURRENT_WAYPOINT_INDEX < 11):
                     if len(enemies['wizard']) > 0:
                         for enemy_wiz in enemies['wizard']:
                             if (enemy_wiz.x > 1100) and (enemy_wiz.x < 1300) and (enemy_wiz.y > 1100) and (enemy_wiz.y < 1300):
@@ -391,7 +375,7 @@ class MyStrategy:
                         return None
 
             if self.lane == LaneType.BOTTOM:
-                if (self.CURRENT_WAYPOINT_INDEX > 6) and (self.CURRENT_WAYPOINT_INDEX < 11):
+                if (self.CURRENT_WAYPOINT_INDEX > 7) and (self.CURRENT_WAYPOINT_INDEX < 11):
                     if len(enemies['wizard']) > 0:
                         for enemy_wiz in enemies['wizard']:
                             if (enemy_wiz.x > 2700) and (enemy_wiz.x < 2900) and (enemy_wiz.y > 2700) and (enemy_wiz.y < 2900):
@@ -466,51 +450,6 @@ class MyStrategy:
         # end bonus collection
         pass
 
-        # bonus collection: simple option
-        # if self.strategy_steps % 2501 == 1:
-        #     self.BONUS_EXIST = True
-        #     print('Bonus activated')
-        #
-        # if self.BONUS_EXIST:
-        #     if self.lane == LaneType.TOP:
-        #         if self.me.get_distance_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1]) < 1600:
-        #             if (self.CURRENT_WAYPOINT_INDEX >= 6) and (self.CURRENT_WAYPOINT_INDEX <= 8):
-        #                 # check if wizard here
-        #                 # if minion here
-        #                 # waypoint system add here
-        #                 self.move_.turn = self.me.get_angle_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1])
-        #                 self.move_.speed = self.MAX_SPEED
-        #                 self.move_.action = ActionType.MAGIC_MISSILE
-        #                 self.move_.cast_angle = self.me.get_angle_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1])
-        #                 self.move_.min_cast_distance = 10
-        #                 if self.me.get_distance_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1]) < 600:
-        #                     if self.world.bonuses:
-        #                         for bonus in self.world.bonuses:
-        #                             if bonus.x == self.BONUS_POINT_TOP[0] and bonus.y == self.BONUS_POINT_TOP[0]:
-        #                                 self.BONUS_EXIST = True
-        #                                 break
-        #                             self.BONUS_EXIST = False
-        #                     else:
-        #                         self.BONUS_EXIST = False
-        #
-        #                 if self.me.get_distance_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1]) <= 55:
-        #                     if self.me.statuses:
-        #                         my_status = self.me.statuses[0]
-        #                         print(my_status.type, my_status.remaining_duration_ticks)
-        #
-        #                 return None
-        #
-        # if self.lane == LaneType.TOP:
-        #     if self.me.get_distance_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1]) <= 600:
-        #         self.move_.turn = self.me.get_angle_to(350, 450)
-        #         self.move_.speed = self.MAX_SPEED
-        #         self.move_.action = ActionType.MAGIC_MISSILE
-        #         self.move_.cast_angle = self.me.get_angle_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1])
-        #         self.move_.min_cast_distance = 10
-        #         return None
-        # # stop bonus collection -------------------------------------
-
-        pass
         # new limit range function ----------------------------------
         if orc:
             if self.me.get_distance_to(orc.x, orc.y) <= self.ENEMIES_RANGE_LIMIT[3]:
@@ -528,19 +467,9 @@ class MyStrategy:
         if self.RANGE_LIMIT_ACTIVE:
             # attack if can:
             if my_target:
-                self.FIGHTING = True
-                distance = self.me.get_distance_to(my_target.x, my_target.y)
-                if distance <= self.me.cast_range:
-                    if self.me.remaining_cooldown_ticks_by_action[2] <= 5:
-                        angle = self.me.get_angle_to(my_target.x, my_target.y)
-                        move.turn = angle
-                        if abs(angle) < game.staff_sector / 2:
-                            move.action = ActionType.MAGIC_MISSILE
-                            move.cast_angle = angle
-                            move.min_cast_distance = distance - my_target.radius + game.magic_missile_radius
-
-                        self.strategy_time += time.time() - start_strategy_execute
-                        return None
+                if self.attack_target(my_target):
+                    self.strategy_time += time.time() - start_strategy_execute
+                    return None
             # go back
             waypoint = self.last_waypoint()
             angle = self.me.get_angle_to(waypoint[0], waypoint[1])
@@ -551,109 +480,12 @@ class MyStrategy:
             self.strategy_time += time.time() - start_strategy_execute
             return None
         # new limit range function ----------------------------------
-        pass
-
-        # # old limit range function: ---------------------------------
-        # # staying close to frontier - refactor than
-        # if self.ENEMY_IN_RANGE_TICK > 0:
-        #     # if self.lane == LaneType.TOP:
-        #     if self.me.x < 100:
-        #         angle = self.me.get_angle_to(self.me.x, self.me.y + self.BACK_DISTANCE)
-        #         self.move_.turn = angle
-        #         self.move_.speed = self.game.wizard_backward_speed
-        #     elif self.me.y < 100:
-        #         angle = self.me.get_angle_to(self.me.x, self.me.y + self.BACK_DISTANCE)
-        #         self.move_.turn = angle
-        #         self.move_.speed = self.game.wizard_backward_speed
-        #     else:
-        #         self.move_.speed = -self.game.wizard_backward_speed
-        #     self.ENEMY_IN_RANGE_TICK -= 1
-        #
-        #     # switch to the best enemy
-        #     nearest_enemy_wizard = self.get_closest_or_with_low_hp_enemy_wizard_in_attack_range()
-        #     if nearest_enemy_wizard is not None:
-        #         my_target = nearest_enemy_wizard
-        #     else:
-        #         my_target = self.get_nearest_target_in_my_visible_range()
-        #
-        #     if my_target:
-        #         self.FIGHTING = True
-        #         distance = self.me.get_distance_to(my_target.x, my_target.y)
-        #         if distance <= self.me.cast_range:
-        #             angle = self.me.get_angle_to(my_target.x, my_target.y)
-        #             move.turn = angle
-        #             if abs(angle) < game.staff_sector / 2:
-        #                 if self.me.remaining_cooldown_ticks_by_action[2] == 0:
-        #                     move.min_cast_distance = distance - my_target.radius - 10
-        #                     move.action = ActionType.MAGIC_MISSILE
-        #                     move.cast_angle = angle
-        #     return None
-        #
-        # # set a flag if too close to the enemies
-        # # switch to the best enemy
-        # nearest_enemy_wizard = self.get_closest_or_with_low_hp_enemy_wizard_in_attack_range()
-        # if nearest_enemy_wizard is not None:
-        #     my_target = nearest_enemy_wizard
-        # else:
-        #     my_target = self.get_nearest_target_in_my_visible_range()
-        # the_closest = self.get_closest_enemy()
-        # # TODO add obstacles check
-        # if the_closest is not None:
-        #     self.FIGHTING = True
-        #     if self.me.remaining_cooldown_ticks_by_action[2] == 0 and my_target is not None:
-        #         if self.me.get_distance_to(my_target.x, my_target.y) <= self.me.cast_range:
-        #             angle_fire = self.me.get_angle_to(my_target.x, my_target.y)
-        #             if abs(angle_fire) < game.staff_sector / 2:
-        #                 move.action = ActionType.MAGIC_MISSILE
-        #                 move.cast_angle = self.me.get_angle_to(my_target.x, my_target.y)
-        #                 move.min_cast_distance = self.me.get_distance_to(my_target.x, my_target.y) - \
-        #                                          my_target.radius - self.game.magic_missile_radius
-        #     if self.me.life == self.me.max_life:
-        #         self.ENEMY_IN_RANGE_TICK = 1
-        #     else:
-        #         self.ENEMY_IN_RANGE_TICK = 40
-        #     print('range limit active, me x: %s, y: %s, HP - %s' % (round(self.me.x, 1), round(self.me.y, 1),
-        #                                                             self.me.life))
-        #     delta_x = self.me.x - the_closest.x
-        #     delta_y = self.me.y - the_closest.y
-        #     angle = None
-        #
-        #     # I
-        #     if delta_y > 0 and abs(delta_x) <= self.BACK_ZONE:
-        #         if self.me.y > 3800:
-        #             angle = self.me.get_angle_to(self.me.x, 3900)
-        #         else:
-        #             angle = self.me.get_angle_to(self.me.x, self.me.y + self.BACK_DISTANCE)
-        #     # II
-        #     elif delta_x < 0 and abs(delta_y) <= self.BACK_ZONE:
-        #         if self.me.x <= 200:
-        #             angle = self.me.get_angle_to(self.me.x, self.me.y - self.BACK_DISTANCE * 2)
-        #         else:
-        #             angle = self.me.get_angle_to(self.me.x - self.BACK_DISTANCE, self.me.y)
-        #
-        #     if angle is None:
-        #         self.move_.turn = -self.me.angle
-        #     else:
-        #         self.move_.turn = -angle
-        #
-        #     self.move_.speed = -self.game.wizard_backward_speed
-        #     return None
-        # # old limit range function: ---------------------------------
 
         pass
         # if on the edge of range and nothing triggers
         # attack something in range
         if my_target:
-            self.FIGHTING = True
-            distance = self.me.get_distance_to(my_target.x, my_target.y)
-            if distance - my_target.radius <= self.me.cast_range:
-                angle = self.me.get_angle_to(my_target.x, my_target.y)
-                move.turn = angle
-                if abs(angle) < game.staff_sector / 2:
-                    if self.me.remaining_cooldown_ticks_by_action[2] == 0:
-                        move.action = ActionType.MAGIC_MISSILE
-                        move.cast_angle = angle
-                        move.min_cast_distance = distance - my_target.radius + game.magic_missile_radius - 10
+            self.attack_target(my_target)
 
         # nothing to do - go further + if this is beginning wait for a minion wave
         self.FIGHTING = False
@@ -688,14 +520,14 @@ class MyStrategy:
         self.waypoints_top.append([50, map_size - 50])
         self.waypoints_top.append([map_size - 3800, map_size - 1100])
         self.waypoints_top.append([map_size - 3800, map_size - 1400])
-        self.waypoints_top.append([map_size - 3750, map_size - 1800])
+        self.waypoints_top.append([map_size - 3800, map_size - 1800])
         self.waypoints_top.append([map_size - 3800, map_size - 2200])
-        self.waypoints_top.append([map_size - 3800, map_size - 2800])
-        self.waypoints_top.append([map_size - 3800, map_size - 3200])  # wait wave
-        self.waypoints_top.append([map_size - 3750, map_size - 3500])
-        self.waypoints_top.append([map_size - 3700, map_size - 3650])
-        self.waypoints_top.append([map_size - 3500, map_size - 3800])
-        self.waypoints_top.append([map_size - 3200, map_size - 3800])
+        self.waypoints_top.append([map_size - 3800, map_size - 2800])  # wait wave
+        self.waypoints_top.append([map_size - 3800, map_size - 3200])
+        self.waypoints_top.append([map_size - 3550, map_size - 3300])
+        self.waypoints_top.append([map_size - 3400, map_size - 3400])  # 8
+        self.waypoints_top.append([map_size - 3350, map_size - 3600])
+        self.waypoints_top.append([map_size - 3200, map_size - 3800])  # 10
         self.waypoints_top.append([map_size - 2800, map_size - 3800])
         self.waypoints_top.append([map_size - 2400, map_size - 3800])
         self.waypoints_top.append([map_size - 2000, map_size - 3800])
@@ -708,11 +540,11 @@ class MyStrategy:
         self.waypoints_bot.append([map_size - 2600, map_size - 200])
         self.waypoints_bot.append([map_size - 2200, map_size - 200])
         self.waypoints_bot.append([map_size - 1800, map_size - 200])
-        self.waypoints_bot.append([map_size - 1200, map_size - 200])
-        self.waypoints_bot.append([map_size - 800, map_size - 200])  # stay here
-        self.waypoints_bot.append([map_size - 500, map_size - 350])
-        self.waypoints_bot.append([map_size - 350, map_size - 300])
-        self.waypoints_bot.append([map_size - 200, map_size - 500])
+        self.waypoints_bot.append([map_size - 1200, map_size - 200])  # stay here
+        self.waypoints_bot.append([map_size - 800, map_size - 200])
+        self.waypoints_bot.append([map_size - 700, map_size - 450])
+        self.waypoints_bot.append([map_size - 600, map_size - 600])
+        self.waypoints_bot.append([map_size - 400, map_size - 650])
         self.waypoints_bot.append([map_size - 200, map_size - 800])
         self.waypoints_bot.append([map_size - 200, map_size - 1200])
         self.waypoints_bot.append([map_size - 200, map_size - 1600])
@@ -731,7 +563,7 @@ class MyStrategy:
         self.waypoints_mid.append([map_size - 2500, map_size - 1500])
         self.waypoints_mid.append([map_size - 2250, map_size - 1750])
         self.waypoints_mid.append([map_size - 2000, map_size - 2000])
-        self.waypoints_mid.append([map_size - 1750, map_size - 2000])
+        self.waypoints_mid.append([map_size - 1850, map_size - 2200])
         self.waypoints_mid.append([map_size - 1500, map_size - 2500])
         self.waypoints_mid.append([map_size - 1250, map_size - 2750])
         self.waypoints_mid.append([map_size - 1000, map_size - 3000])
@@ -741,76 +573,6 @@ class MyStrategy:
 
         self.LAST_WAYPOINT_INDEX = 16
 
-        # if self.respawn == self.start_positions[0] or self.respawn == self.start_positions[4]:
-        #     self.waypoints.append([50, map_size - 50])
-        #     self.waypoints.append([map_size - 3800, map_size - 1100])
-        #     self.waypoints.append([map_size - 3800, map_size - 1400])
-        #     self.waypoints.append([map_size - 3750, map_size - 1800])
-        #     self.waypoints.append([map_size - 3800, map_size - 2200])
-        #     self.waypoints.append([map_size - 3800, map_size - 2800])
-        #     self.waypoints.append([map_size - 3800, map_size - 3200])    # wait wave
-        #     self.waypoints.append([map_size - 3750, map_size - 3500])
-        #     self.waypoints.append([map_size - 3700, map_size - 3650])
-        #     self.waypoints.append([map_size - 3500, map_size - 3800])
-        #     self.waypoints.append([map_size - 3200, map_size - 3800])
-        #     self.waypoints.append([map_size - 2800, map_size - 3800])
-        #     self.waypoints.append([map_size - 2400, map_size - 3800])
-        #     self.waypoints.append([map_size - 2000, map_size - 3800])
-        #     self.waypoints.append([map_size - 1600, map_size - 3800])
-        #     self.waypoints.append([map_size - 1200, map_size - 3800])
-        #     self.waypoints.append([map_size - 800, map_size - 3800])
-        #     self.waypoints.append([map_size - 200, map_size - 3800])
-        #     self.lane = LaneType.TOP
-        #     self.LAST_WAYPOINT_INDEX = 17
-        #     self.bonus_waypoints.append([500, 500])
-        #     self.bonus_waypoints.append([800, 800])
-        #     self.bonus_waypoints.append([1160, 1160])
-        # elif self.respawn == self.start_positions[1] or self.respawn == self.start_positions[3]:
-        #     self.waypoints.append([50, map_size - 50])
-        #     self.waypoints.append([map_size - 3100, map_size - 200])
-        #     self.waypoints.append([map_size - 2600, map_size - 200])
-        #     self.waypoints.append([map_size - 2200, map_size - 200])
-        #     self.waypoints.append([map_size - 1800, map_size - 200])
-        #     self.waypoints.append([map_size - 1200, map_size - 200])
-        #     self.waypoints.append([map_size - 800, map_size - 200])  # stay here
-        #     self.waypoints.append([map_size - 500, map_size - 350])
-        #     self.waypoints.append([map_size - 350, map_size - 300])
-        #     self.waypoints.append([map_size - 200, map_size - 500])
-        #     self.waypoints.append([map_size - 200, map_size - 800])
-        #     self.waypoints.append([map_size - 200, map_size - 1200])
-        #     self.waypoints.append([map_size - 200, map_size - 1600])
-        #     self.waypoints.append([map_size - 200, map_size - 2000])
-        #     self.waypoints.append([map_size - 200, map_size - 2400])
-        #     self.waypoints.append([map_size - 200, map_size - 2800])
-        #     self.waypoints.append([map_size - 200, map_size - 3200])
-        #     self.waypoints.append([map_size - 200, map_size - 3800])
-        #     self.lane = LaneType.BOTTOM
-        #     self.LAST_WAYPOINT_INDEX = 17
-        # elif self.respawn == self.start_positions[2]:
-        #     self.waypoints.append([50, map_size - 50])
-        #     self.waypoints.append([map_size - 3800, map_size - 1100])
-        #     self.waypoints.append([map_size - 3800, map_size - 1400])
-        #     self.waypoints.append([map_size - 3750, map_size - 1800])
-        #     self.waypoints.append([map_size - 3800, map_size - 2200])
-        #     self.waypoints.append([map_size - 3800, map_size - 2800])
-        #     self.waypoints.append([map_size - 3800, map_size - 3200])    # wait wave
-        #     self.waypoints.append([map_size - 3750, map_size - 3500])
-        #     self.waypoints.append([map_size - 3700, map_size - 3650])
-        #     self.waypoints.append([map_size - 3500, map_size - 3800])
-        #     self.waypoints.append([map_size - 3200, map_size - 3800])
-        #     self.waypoints.append([map_size - 2800, map_size - 3800])
-        #     self.waypoints.append([map_size - 2400, map_size - 3800])
-        #     self.waypoints.append([map_size - 2000, map_size - 3800])
-        #     self.waypoints.append([map_size - 1600, map_size - 3800])
-        #     self.waypoints.append([map_size - 1200, map_size - 3800])
-        #     self.waypoints.append([map_size - 800, map_size - 3800])
-        #     self.waypoints.append([map_size - 200, map_size - 3800])
-        #     self.lane = LaneType.TOP
-        #     self.LAST_WAYPOINT_INDEX = 17
-        #     self.bonus_waypoints.append([500, 500])
-        #     self.bonus_waypoints.append([800, 800])
-        #     self.bonus_waypoints.append([1160, 1160])
-
     def initialize_tick(self, world, game, me, move):
         self.world = world
         self.game = game
@@ -818,9 +580,7 @@ class MyStrategy:
         self.move_ = move
         self.strategy_steps += 1
 
-        if self.strategy_steps % 2400 == 0:
-            self.BONUS_EXIST = True
-            print('Bonus will appear soon')
+        self.check_bonus_will_exist()
 
         if self.strategy_steps - 1 + self.game.wizard_min_resurrection_delay_ticks == self.world.tick_index or \
            self.strategy_steps - 1 != self.world.tick_index:
@@ -847,6 +607,20 @@ class MyStrategy:
 
             self.CURRENT_WAYPOINT_INDEX = 1
             self.WAS_DEAD = False
+
+    def attack_target(self, my_target):
+        self.FIGHTING = True
+        distance = self.me.get_distance_to(my_target.x, my_target.y)
+        if distance - my_target.radius <= self.me.cast_range:
+            angle = self.me.get_angle_to(my_target.x, my_target.y)
+            self.move_.turn = angle
+            if abs(angle) < self.game.staff_sector / 2:
+                if self.me.remaining_cooldown_ticks_by_action[2] == 0:
+                    self.move_.action = ActionType.MAGIC_MISSILE
+                    self.move_.cast_angle = angle
+                    self.move_.min_cast_distance = distance - my_target.radius + self.game.magic_missile_radius
+                    return True
+        return False
 
     def get_the_closest_of_attack_range(self, enemies):
         # returns
@@ -955,47 +729,6 @@ class MyStrategy:
                 self.move_.speed = self.game.wizard_forward_speed
             else:
                 print('WTF?? no waypoint send to --move_to_waypoint function--')
-
-    # def get_next_waypoint(self):
-    #     last_waypoint_index = len(self.waypoints) - 1
-    #     last_waypoint = self.waypoints[last_waypoint_index]
-    #
-    #     for waypoint_index in range(0, last_waypoint_index - 1):
-    #         waypoint = self.waypoints[waypoint_index]
-    #         if self.me.get_distance_to(waypoint[0], waypoint[1]) <= self.WAYPOINT_RADIUS:
-    #             return self.waypoints[waypoint_index + 1]
-    #         if math.hypot(waypoint[0] - last_waypoint[0], waypoint[1] - last_waypoint[1]) < self.me.get_distance_to(
-    #                                                       last_waypoint[0], last_waypoint[1]):
-    #             return waypoint
-    #
-    # def get_previous_waypoint(self):
-    #     first_waypoint = self.waypoints[0]
-    #     for waypoint_index in range(len(self.waypoints) - 1, 0, -1):
-    #         waypoint = self.waypoints[waypoint_index]
-    #         if self.me.get_distance_to(waypoint[0], waypoint[1]) <= self.WAYPOINT_RADIUS:
-    #             return self.waypoints[waypoint_index - 1]
-    #         if math.hypot(waypoint[0] - first_waypoint[0], waypoint[1] - first_waypoint[1]) < self.me.get_distance_to(
-    #                                                        first_waypoint[0], first_waypoint[1]):
-    #             return waypoint
-    #
-    # def goto(self, waypoint):
-    #     if self.strategy_steps % 10 == 0:
-    #         print('Milestone %s' % waypoint)
-    #
-    #     # !!! True / False right direction
-    #     waypoint_bfs = self.path_finder(waypoint, True)
-    #
-    #     if self.strategy_steps % 10 == 0:
-    #         print(waypoint, waypoint_bfs)
-    #     if waypoint_bfs:
-    #         angle = self.me.get_angle_to(waypoint_bfs[0], waypoint_bfs[1])
-    #         self.move_.turn = angle
-    #         self.move_.speed = self.MAX_SPEED
-    #     else:
-    #         if waypoint:
-    #             angle = self.me.get_angle_to(waypoint[0], waypoint[1])
-    #             self.move_.turn = angle
-    #             self.move_.speed = self.MAX_SPEED
 
     def get_closest_or_with_low_hp_enemy_wizard_in_attack_range(self):
         enemy_wizards = []
@@ -1137,10 +870,6 @@ class MyStrategy:
             int(min(lt[1], rt[1]) + step), int(max(lb[1], rb[1]) - step)])
 
         self.debug_obstacles = obstacles
-        # for obstacle in obstacles:
-        #     if obstacle.faction == self.me.faction:
-        #         print(obstacle.x, obstacle.y)
-        # print('')
 
         # generate grid cell names
         net_2d_name = []
@@ -1372,7 +1101,7 @@ class MyStrategy:
     def is_obstacle_in_node(target_cell, obstacles, cell_radius):
         for obstacle in obstacles:
             squared_dist = (target_cell[0] - obstacle.x) ** 2 + (target_cell[1] - obstacle.y) ** 2
-            if squared_dist <= 1.42 * cell_radius ** 2:
+            if squared_dist + obstacle.radius ** 2 <= 1.42 * cell_radius ** 2:
                 return True
             # if (obstacle.x + obstacle.radius < target_cell[0] - )
         return False
@@ -1405,45 +1134,6 @@ class MyStrategy:
                     if target.x != self.me.x:
                         obstacles.append(target)
         return obstacles
-
-    def dodge_and_evade(self):
-        # projectile parameters:
-        #  - dodge:
-        #       orc: range 50
-        #  - evade:
-        #       magic_missile: r 10, spd 40, dmg 12
-        #       frostbolt    : r 15, spd 35, dmg 35
-        #       fireball     : r 20, spd 30, dmg 24 / 240 ticks + r100 dmg 12 linear
-        #       dart         : r 5,  spd 50, dmg 6
-        #
-
-        projectiles = []
-        for projectile in self.world.projectiles:
-            if self.me.get_distance_to(projectile.x, projectile.y) < self.EVADE_DISTANCE:
-                if projectile.faction == self.me.faction:
-                    continue
-                else:
-                    projectiles.append(projectile)
-        if len(projectiles) > 0:
-            print('Number of projectiles in attack range: %s' % len(projectiles))
-
-            # target is me?
-            tick_explode = 0
-            for projectile in projectiles:
-                distance_to_me = self.me.get_distance_to(projectile.x, projectile.y)
-                distance_to_me = distance_to_me - self.me.radius - projectile.radius
-                if projectile.type == ProjectileType.MAGIC_MISSILE:
-                    tick_explode = distance_to_me / 40
-                elif projectile.type == ProjectileType.FIREBALL:
-                    tick_explode = distance_to_me / 30
-                elif projectile.type == ProjectileType.FROST_BOLT:
-                    tick_explode = distance_to_me / 35
-                elif projectile.type == ProjectileType.DART:
-                    tick_explode = distance_to_me / 50
-                dodge_time = tick_explode * self.game.wizard_strafe_speed
-                print(dodge_time)
-
-        return False
 
     def get_a_line_to_push(self):
         we = []
@@ -1491,3 +1181,39 @@ class MyStrategy:
             return LaneType.BOTTOM
 
         return self.lane
+
+    def check_bonus_will_exist(self):
+        bonus = [0, 0]
+        distance, time_to_arrive = 0, 0
+
+        if self.lane == LaneType.TOP:
+            bonus = self.BONUS_POINT_TOP
+        if self.lane == LaneType.BOTTOM:
+            bonus = self.BONUS_POINT_BOT
+        if self.lane == LaneType.MIDDLE:
+            self.BONUS_EXIST = False
+            return None
+
+        # get distance to travel for bonus
+        if (self.CURRENT_WAYPOINT_INDEX > 6) and (self.CURRENT_WAYPOINT_INDEX <= 12):
+            if (self.CURRENT_WAYPOINT_INDEX > 5) and (self.CURRENT_WAYPOINT_INDEX <= 9):
+                distance = self.me.get_distance_to(bonus[0], bonus[1])
+
+            if self.CURRENT_WAYPOINT_INDEX > 9:
+                distance = self.me.get_distance_to(self.waypoints[9][0], self.waypoints[9][1])
+                distance += math.hypot(abs(self.waypoints[9][0] - self.waypoints[8][0]),
+                                       abs(self.waypoints[9][1] - self.waypoints[8][1]))
+                distance += math.hypot(abs(self.waypoints[8][0] - bonus[0]),
+                                       abs(self.waypoints[8][1] - bonus[1]))
+            if distance > 0:
+                time_to_arrive = distance // 4
+
+            if self.strategy_steps + time_to_arrive % 2500 == 0:
+                self.BONUS_EXIST = True
+                print('--------------------------------------')
+                print('BONUS, time to travel %s, distance %s' % (time_to_arrive, distance))
+                print('--------------------------------------')
+
+        else:
+            self.BONUS_EXIST = False
+

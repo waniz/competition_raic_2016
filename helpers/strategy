@@ -190,7 +190,41 @@ STRATEGY v18:
   5. hardcode only top?
 
 
-STRATEGY v19:
+STRATEGY v19: Completed!
+ +1. fix bug with rotate if bonus has to be picked
+ +2. switch to simple go to bonus option
+
+
+STRATEGY v20: Completed!
+ +1. go back to collect bonus from 11-12
+ +2. defense base
+ +3. add mid
+ +4. add atk if low hp
+
+
+v18-20 competition:
+  v20: 40
+  v19: 45
+  v18: 33
+
+STRATEGY v21: Completed!
+  1. try to go alone, remove hardcoded bottom line only
+
+
+STRATEGY v22: Round 1.1 part
+  1. only top line, with defense
+
+
+STRATEGY v23: Round 1.2 part
+  +1. move top lines close to bonus not 300, 350 !!!
+  +2. bonus check for distance not in 2350. !!!
+  3. if I go back after bonus, run back works bad
+  +4. check radius for pathfinder
+  5. add pathfinder for bonus travel
+  6. 10 waypoint goes to 8 first than bonus
+  +7. check all line waypoints
+
+STRATEGY v23:
   FEATURE: Li algorithm (wave algorithm) or A*
   FEATURE: Tangent movement
   FEATURE: Danger Field algorithm
@@ -201,10 +235,3 @@ STRATEGY v19:
   4. move to defence
   6. check if no enemy wizard at line, where everybody is
   7. waypoints for defence
-  8. waypoints for attack
-  9. respawn position check
-  10. Backward / forward trouble if position on enemy side. Check pathfinding directions
-
-
-  Watch list:
-  http://russianaicup.ru/game/view/44601
