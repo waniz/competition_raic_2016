@@ -172,8 +172,7 @@ class MyStrategy:
                 dbg.text(self.waypoints[index][0], self.waypoints[index][1], '%s, x: %s, y: %s' % (index, self.waypoints[index][0], self.waypoints[index][1]), (0.5, 0.5, 0.5))
 
             if self.debug_attack_target:
-                dbg.circle(self.debug_attack_target.x, self.debug_attack_target.y, self.debug_attack_target.radius, (1, 0, 0))
-                dbg.circle(self.debug_attack_target.x, self.debug_attack_target.y, 10, (1, 0, 0))
+                dbg.fill_circle(self.debug_attack_target.x, self.debug_attack_target.y, self.debug_attack_target.radius, (1, 0, 0))
 
     def move(self, me: Wizard, world: World, game: Game, move: Move):
 
@@ -217,7 +216,6 @@ class MyStrategy:
             my_target = tower
         else:
             my_target = self.get_nearest_target_in_my_visible_range()
-
 
         self.debug_attack_target = my_target
 
@@ -270,6 +268,9 @@ class MyStrategy:
         # in game-check, if stuck
         if self.me.x == self.PREVIOUS_POS[0] and self.me.y == self.PREVIOUS_POS[1]:
             self.NO_MOVE += 1
+            if self.NO_MOVE > 110:
+                self.NO_MOVE = 0
+
             if self.NO_MOVE >= self.MAX_NO_MOVE + self.MAX_NO_MOVE:
                 print('I am stuck')
                 # self.move_.turn = self.game.wizard_max_turn_angle
@@ -278,6 +279,7 @@ class MyStrategy:
                     if self.attack_target(my_target):
                         self.strategy_time += time.time() - start_strategy_execute
                         return None
+
             if self.NO_MOVE >= self.MAX_NO_MOVE:
                 print('I am stuck')
                 # self.move_.turn = self.game.wizard_max_turn_angle
