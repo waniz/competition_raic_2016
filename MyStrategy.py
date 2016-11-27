@@ -218,7 +218,6 @@ class MyStrategy:
             my_target = self.get_nearest_target_in_my_visible_range()
 
         self.debug_attack_target = my_target
-
         self.units_profile += time.time() - units_timer
 
         # visual debugger activation with information from a tick ago
@@ -227,18 +226,7 @@ class MyStrategy:
 
         # some information provider section
         if self.strategy_steps % 100 == 0:
-            print('My stats: hp %s of %s, score %s, coords: x %s y %s' % (me.life, me.max_life, me.xp, round(me.x, 2),
-                                                                          round(me.y, 2)))
-            print('Enemies: minion - %s, wizard - %s, building - %s' %
-                  (len(enemies_in_range['minion']), len(enemies_in_range['wizard']), len(enemies_in_range['building'])))
-            print('Ally: minion - %s, wizard - %s, building - %s' %
-                  (len(ally_in_range['minion']), len(ally_in_range['wizard']), len(ally_in_range['building'])))
-            print('Current strategy tick is %s, Time spent: %s' % (self.strategy_steps,
-                                                                   round(time.time() - self.bot_time, 2)))
-            print('Time bot: %s s, units profiler: %s, graph: %s, BFS: %s' % (round(self.strategy_time, 2),
-                  round(self.units_profile, 2), round(self.graph_profile, 2), round(self.bfs_profile, 2)))
-            print('Death counter: %s Bonus counter: %s' % (self.DEATH_COUNT, self.BONUS_COUNT))
-            print('----------------')
+            self.step_info()
 
         # go back at the beginning for not being stuck with the others
         if self.strategy_steps == 1:
@@ -769,6 +757,22 @@ class MyStrategy:
                 nearest_target = target
                 nearest_target_distance = distance
         return nearest_target
+
+    def step_info(self):
+        print('My stats: hp %s of %s, score %s, coords: x %s y %s' % (me.life, me.max_life, me.xp, round(me.x, 2),
+                                                                      round(me.y, 2)))
+        print('Enemies: minion - %s, wizard - %s, building - %s' %
+              (len(enemies_in_range['minion']), len(enemies_in_range['wizard']), len(enemies_in_range['building'])))
+        print('Ally: minion - %s, wizard - %s, building - %s' %
+              (len(ally_in_range['minion']), len(ally_in_range['wizard']), len(ally_in_range['building'])))
+        print('Current strategy tick is %s, Time spent: %s' % (self.strategy_steps,
+                                                               round(time.time() - self.bot_time, 2)))
+        print('Time bot: %s s, units profiler: %s, graph: %s, BFS: %s' % (round(self.strategy_time, 2),
+                                                                          round(self.units_profile, 2),
+                                                                          round(self.graph_profile, 2),
+                                                                          round(self.bfs_profile, 2)))
+        print('Death counter: %s Bonus counter: %s' % (self.DEATH_COUNT, self.BONUS_COUNT))
+        print('----------------')
 
     # ------ heuristics functions ---------------------------------------
 

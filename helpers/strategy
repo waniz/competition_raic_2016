@@ -225,7 +225,16 @@ STRATEGY v23: Round 1.2 part
   +7. check all line waypoints
   +8. freeze with rotate
 
-STRATEGY v24:
+
+STRATEGY v24: Round 1.2 part
+  +1. bug fix
+
+
+STRATEGY v25: Round 1.2 part
+  +1. bug fix
+
+
+STRATEGY v26:
   FEATURE: Li algorithm (wave algorithm) or A*
   FEATURE: Tangent movement
   FEATURE: Danger Field algorithm
