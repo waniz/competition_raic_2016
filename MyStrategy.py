@@ -133,6 +133,9 @@ class MyStrategy:
     debug_next_waypoint = [400, 3600]
     debug_view_path = []
     debug_obstacles = []
+    debug_distance_to_bonus = 10000
+    debug_time_to_arrive = 0
+    debug_attack_target = None
 
     # game analisys parameters
     MIN_PUSH_AMOUNT = 1
@@ -140,6 +143,9 @@ class MyStrategy:
     def visual_debugger(self):
         with debug.post() as dbg:
             dbg.text(self.me.x - 45, self.me.y + 35, 'x: %s, y: %s' % (round(self.me.x), round(self.me.y)), (0, 0, 0))
+            dbg.text(self.me.x - 45, self.me.y + 45, 'bonus @ %s %s, TTA: %s' % (round(self.debug_distance_to_bonus),
+                     self.BONUS_EXIST, self.debug_time_to_arrive), (0, 0, 0))
+
             dbg.line(self.me.x, self.me.y, self.debug_next_milestone[0], self.debug_next_milestone[1], (0, 0, 0))
             dbg.line(self.me.x, self.me.y, self.debug_next_waypoint[0], self.debug_next_waypoint[1], (0, 0.5, 1))
 
@@ -164,6 +170,10 @@ class MyStrategy:
             for index in range(0, self.LAST_WAYPOINT_INDEX):
                 dbg.circle(self.waypoints[index][0], self.waypoints[index][1], self.WAYPOINT_RADIUS_NEW, (0.5, 0.5, 0.5))
                 dbg.text(self.waypoints[index][0], self.waypoints[index][1], '%s, x: %s, y: %s' % (index, self.waypoints[index][0], self.waypoints[index][1]), (0.5, 0.5, 0.5))
+
+            if self.debug_attack_target:
+                dbg.circle(self.debug_attack_target.x, self.debug_attack_target.y, self.debug_attack_target.radius, (1, 0, 0))
+                dbg.circle(self.debug_attack_target.x, self.debug_attack_target.y, 10, (1, 0, 0))
 
     def move(self, me: Wizard, world: World, game: Game, move: Move):
 
@@ -191,8 +201,7 @@ class MyStrategy:
 
         self.lane = LaneType.TOP
         self.waypoints = self.waypoints_top
-
-        # get all tick information:
+        # get all tick information:4
         units_timer = time.time()
 
         enemies_in_range = self.get_enemies_in_attack_range()
@@ -208,6 +217,9 @@ class MyStrategy:
             my_target = tower
         else:
             my_target = self.get_nearest_target_in_my_visible_range()
+
+
+        self.debug_attack_target = my_target
 
         self.units_profile += time.time() - units_timer
 
@@ -245,7 +257,7 @@ class MyStrategy:
         else:
             if self.strategy_steps < 40:
                 angle = 0
-                if self.respawn == self.start_positions[2]:
+                if self.respawn == self.start_positions[2] or self.respawn == self.start_positions[3]:
                     angle = self.me.get_angle_to(100, 3800)
                 self.move_.turn = angle
                 self.move_.speed = self.game.wizard_backward_speed
@@ -257,17 +269,23 @@ class MyStrategy:
         pass
         # in game-check, if stuck
         if self.me.x == self.PREVIOUS_POS[0] and self.me.y == self.PREVIOUS_POS[1]:
-            if not self.FIGHTING:
-                self.NO_MOVE += 1
-                if self.NO_MOVE >= self.MAX_NO_MOVE:
-                    print('I am stuck')
-                    self.move_.turn = self.game.wizard_max_turn_angle
-                    self.move_.strafe_speed = self.game.wizard_strafe_speed
-                    if my_target:
-                        if self.attack_target(my_target):
-                            self.strategy_time += time.time() - start_strategy_execute
-                            return None
-                    return None
+            self.NO_MOVE += 1
+            if self.NO_MOVE >= self.MAX_NO_MOVE + self.MAX_NO_MOVE:
+                print('I am stuck')
+                # self.move_.turn = self.game.wizard_max_turn_angle
+                self.move_.strafe_speed = -self.game.wizard_strafe_speed
+                if my_target:
+                    if self.attack_target(my_target):
+                        self.strategy_time += time.time() - start_strategy_execute
+                        return None
+            if self.NO_MOVE >= self.MAX_NO_MOVE:
+                print('I am stuck')
+                # self.move_.turn = self.game.wizard_max_turn_angle
+                self.move_.strafe_speed = self.game.wizard_strafe_speed
+                if my_target:
+                    if self.attack_target(my_target):
+                        self.strategy_time += time.time() - start_strategy_execute
+                        return None
         else:
             self.NO_MOVE = 0
         self.PREVIOUS_POS = [self.me.x, self.me.y]
@@ -284,6 +302,7 @@ class MyStrategy:
                           (round(self.me.x, 1), round(self.me.y, 1), self.MOVE_LOW_HP))
                 if my_target:
                     self.attack_target(my_target)
+                return None
         else:
             if self.me.life < self.me.max_life * self.LOW_HP_FACTOR[0]:
                 if self.me.life < self.me.max_life * self.LOW_HP_FACTOR[1]:
@@ -302,25 +321,16 @@ class MyStrategy:
         # bonus collection: if nobody collects in game
         if self.BONUS_EXIST:
             if self.lane == LaneType.TOP:
-                if (self.CURRENT_WAYPOINT_INDEX > 7) and (self.CURRENT_WAYPOINT_INDEX < 11):
-                    if len(enemies['wizard']) > 0:
-                        for enemy_wiz in enemies['wizard']:
-                            if (enemy_wiz.x > 1100) and (enemy_wiz.x < 1300) and (enemy_wiz.y > 1100) and (enemy_wiz.y < 1300):
-                                self.BONUS_EXIST = False
-
+                if (self.CURRENT_WAYPOINT_INDEX >= 8) and (self.CURRENT_WAYPOINT_INDEX < 10):
                     # self.move_to_waypoint(self.BONUS_POINT_TOP, True)
                     self.move_.turn = self.me.get_angle_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1])
                     self.move_.speed = self.game.wizard_forward_speed
                     self.move_.action = ActionType.MAGIC_MISSILE
                     self.move_.cast_angle = self.me.get_angle_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1])
-                    self.move_.min_cast_distance = 400
-                    if self.me.get_distance_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1]) < 500:
+                    self.move_.min_cast_distance = 40
+                    if (self.me.get_distance_to(1200, 1200) < 400) and (self.strategy_steps % 2500 < 2200):
                         if self.world.bonuses:
-                            for bonus in self.world.bonuses:
-                                if bonus.x == self.BONUS_POINT_TOP[0] and bonus.y == self.BONUS_POINT_TOP[0]:
-                                    self.BONUS_EXIST = True
-                                    break
-                                self.BONUS_EXIST = False
+                            self.BONUS_EXIST = True
                         else:
                             self.BONUS_EXIST = False
 
@@ -334,38 +344,27 @@ class MyStrategy:
                     return None
                 else:
                     # collect bonus if at 11 and 12 position
-                    if (self.CURRENT_WAYPOINT_INDEX >= 11) and (self.CURRENT_WAYPOINT_INDEX < 13):
-                        print('go back to waypoint[8]')
+                    if (self.CURRENT_WAYPOINT_INDEX > 9) and (self.CURRENT_WAYPOINT_INDEX < 13):
                         if not self.BONUS_GO:
-                            self.move_to_waypoint(self.waypoints[8], False)
-                        if self.me.get_distance_to(self.waypoints[8][0], self.waypoints[8][1]) < 120:
-                            print('waypoint[8] active: goto bonus')
+                            self.move_to_waypoint(self.waypoints[9], False)
+                        if self.me.get_distance_to(self.waypoints[9][0], self.waypoints[9][1]) < self.WAYPOINT_RADIUS_NEW:
+                            print('waypoint[9] active: goto bonus')
                             self.BONUS_GO = True
                         if self.BONUS_GO:
+                            # self.move_to_waypoint(self.BONUS_POINT_TOP, False)
                             self.move_.turn = self.me.get_angle_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1])
                             self.move_.speed = self.game.wizard_forward_speed
+
                             self.move_.action = ActionType.MAGIC_MISSILE
                             self.move_.cast_angle = self.me.get_angle_to(self.BONUS_POINT_TOP[0],
                                                                          self.BONUS_POINT_TOP[1])
-                            self.move_.min_cast_distance = 400
-                            if self.me.get_distance_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1]) < 500:
-                                if self.world.bonuses:
-                                    for bonus in self.world.bonuses:
-                                        if bonus.x == self.BONUS_POINT_TOP[0] and bonus.y == self.BONUS_POINT_TOP[0]:
-                                            self.BONUS_EXIST = True
-                                            break
-                                        self.BONUS_EXIST = False
-                                        self.BONUS_GO = False
-                                        self.CURRENT_WAYPOINT_INDEX = 8
-                                else:
-                                    self.BONUS_EXIST = False
-                                    self.BONUS_GO = False
-                                    self.CURRENT_WAYPOINT_INDEX = 8
+                            self.move_.min_cast_distance = 40
 
                             if self.me.get_distance_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1]) <= 55:
                                 if self.me.statuses:
                                     self.BONUS_COUNT += 1
                                     self.BONUS_GO = False
+                                    self.CURRENT_WAYPOINT_INDEX = 8
                                     my_status = self.me.statuses[0]
                                     print(my_status.type, my_status.remaining_duration_ticks)
 
@@ -374,78 +373,57 @@ class MyStrategy:
                         self.strategy_time += time.time() - start_strategy_execute
                         return None
 
-            if self.lane == LaneType.BOTTOM:
-                if (self.CURRENT_WAYPOINT_INDEX > 7) and (self.CURRENT_WAYPOINT_INDEX < 11):
-                    if len(enemies['wizard']) > 0:
-                        for enemy_wiz in enemies['wizard']:
-                            if (enemy_wiz.x > 2700) and (enemy_wiz.x < 2900) and (enemy_wiz.y > 2700) and (enemy_wiz.y < 2900):
-                                self.BONUS_EXIST = False
-
-                    # self.move_to_waypoint(self.BONUS_POINT_BOT, True)
-                    self.move_.turn = self.me.get_angle_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1])
-                    self.move_.speed = self.game.wizard_forward_speed
-                    self.move_.action = ActionType.MAGIC_MISSILE
-                    self.move_.cast_angle = self.me.get_angle_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1])
-                    self.move_.min_cast_distance = 400
-                    if self.me.get_distance_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1]) < 500:
-                        if self.world.bonuses:
-                            for bonus in self.world.bonuses:
-                                if bonus.x == self.BONUS_POINT_BOT[0] and bonus.y == self.BONUS_POINT_BOT[0]:
-                                    self.BONUS_EXIST = True
-                                    break
-                                self.BONUS_EXIST = False
-                        else:
-                            self.BONUS_EXIST = False
-
-                    if self.me.get_distance_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1]) <= 55:
-                        if self.me.statuses:
-                            my_status = self.me.statuses[0]
-                            print(my_status.type, my_status.remaining_duration_ticks)
-                            self.BONUS_COUNT += 1
-
-                    self.strategy_time += time.time() - start_strategy_execute
-                    return None
-
-                # collect bonus if at 11 and 12 position
-                if (self.CURRENT_WAYPOINT_INDEX >= 11) and (self.CURRENT_WAYPOINT_INDEX < 13):
-                    print('go back to waypoint[8]')
-                    if not self.BONUS_GO:
-                        self.move_to_waypoint(self.waypoints[8], False)
-                    if self.me.get_distance_to(self.waypoints[8][0], self.waypoints[8][1]) < 120:
-                        print('waypoint[8] active: goto bonus')
-                        self.BONUS_GO = True
-                    if self.BONUS_GO:
-                        self.move_.turn = self.me.get_angle_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1])
-                        self.move_.speed = self.game.wizard_forward_speed
-                        self.move_.action = ActionType.MAGIC_MISSILE
-                        self.move_.cast_angle = self.me.get_angle_to(self.BONUS_POINT_BOT[0],
-                                                                     self.BONUS_POINT_BOT[1])
-                        self.move_.min_cast_distance = 400
-                        if self.me.get_distance_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1]) < 500:
-                            if self.world.bonuses:
-                                for bonus in self.world.bonuses:
-                                    if bonus.x == self.BONUS_POINT_BOT[0] and bonus.y == self.BONUS_POINT_BOT[0]:
-                                        self.BONUS_EXIST = True
-                                        break
-                                    self.BONUS_EXIST = False
-                                    self.BONUS_GO = False
-                                    self.CURRENT_WAYPOINT_INDEX = 8
-                            else:
-                                self.BONUS_EXIST = False
-                                self.BONUS_GO = False
-                                self.CURRENT_WAYPOINT_INDEX = 8
-
-                        if self.me.get_distance_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1]) <= 55:
-                            if self.me.statuses:
-                                self.BONUS_COUNT += 1
-                                self.BONUS_GO = False
-                                my_status = self.me.statuses[0]
-                                print(my_status.type, my_status.remaining_duration_ticks)
-
-                        self.strategy_time += time.time() - start_strategy_execute
-                        return None
-                    self.strategy_time += time.time() - start_strategy_execute
-                    return None
+            # if self.lane == LaneType.BOTTOM:
+            #     if (self.CURRENT_WAYPOINT_INDEX >= 8) and (self.CURRENT_WAYPOINT_INDEX < 11):
+            #         # self.move_to_waypoint(self.BONUS_POINT_TOP, True)
+            #         self.move_.turn = self.me.get_angle_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1])
+            #         self.move_.speed = self.game.wizard_forward_speed
+            #         self.move_.action = ActionType.MAGIC_MISSILE
+            #         self.move_.cast_angle = self.me.get_angle_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1])
+            #         if (self.me.get_distance_to(2800, 2800) < 400) and (self.strategy_steps % 2500 < 2200):
+            #             if self.world.bonuses:
+            #                 self.BONUS_EXIST = True
+            #             else:
+            #                 self.BONUS_EXIST = False
+            #
+            #         if self.me.get_distance_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1]) <= 55:
+            #             if self.me.statuses:
+            #                 self.BONUS_COUNT += 1
+            #                 my_status = self.me.statuses[0]
+            #                 print(my_status.type, my_status.remaining_duration_ticks)
+            #
+            #         self.strategy_time += time.time() - start_strategy_execute
+            #         return None
+            #     else:
+            #         # collect bonus if at 11 and 12 position
+            #         if (self.CURRENT_WAYPOINT_INDEX == 11) or (self.CURRENT_WAYPOINT_INDEX == 12):
+            #             if not self.BONUS_GO:
+            #                 self.move_to_waypoint(self.waypoints[9], False)
+            #             if self.me.get_distance_to(self.waypoints[9][0], self.waypoints[9][1]) < self.WAYPOINT_RADIUS_NEW:
+            #                 print('waypoint[9] active: goto bonus')
+            #                 self.BONUS_GO = True
+            #             if self.BONUS_GO:
+            #                 # self.move_to_waypoint(self.BONUS_POINT_TOP, False)
+            #                 self.move_.turn = self.me.get_angle_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1])
+            #                 self.move_.speed = self.game.wizard_forward_speed
+            #
+            #                 self.move_.action = ActionType.MAGIC_MISSILE
+            #                 self.move_.cast_angle = self.me.get_angle_to(self.BONUS_POINT_BOT[0],
+            #                                                              self.BONUS_POINT_BOT[1])
+            #                 self.move_.min_cast_distance = 400
+            #
+            #                 if self.me.get_distance_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1]) <= 55:
+            #                     if self.me.statuses:
+            #                         self.BONUS_COUNT += 1
+            #                         self.BONUS_GO = False
+            #                         self.CURRENT_WAYPOINT_INDEX = 8
+            #                         my_status = self.me.statuses[0]
+            #                         print(my_status.type, my_status.remaining_duration_ticks)
+            #
+            #                 self.strategy_time += time.time() - start_strategy_execute
+            #                 return None
+            #             self.strategy_time += time.time() - start_strategy_execute
+            #             return None
 
         # end bonus collection
         pass
@@ -467,15 +445,17 @@ class MyStrategy:
         if self.RANGE_LIMIT_ACTIVE:
             # attack if can:
             if my_target:
-                if self.attack_target(my_target):
-                    self.strategy_time += time.time() - start_strategy_execute
-                    return None
+                if self.me.remaining_cooldown_ticks_by_action[2] < 5:
+                    if self.attack_target(my_target):
+                        self.strategy_time += time.time() - start_strategy_execute
+                        return None
             # go back
-            waypoint = self.last_waypoint()
-            angle = self.me.get_angle_to(waypoint[0], waypoint[1])
-            self.move_.turn = -angle
-            self.move_.speed = -self.game.wizard_backward_speed
-            self.RANGE_LIMIT_ACTIVE = False
+            if self.me.remaining_cooldown_ticks_by_action[2] >= 5:
+                waypoint = self.last_waypoint()
+                angle = self.me.get_angle_to(waypoint[0], waypoint[1])
+                self.move_.turn = -angle
+                self.move_.speed = -self.game.wizard_backward_speed
+                self.RANGE_LIMIT_ACTIVE = False
 
             self.strategy_time += time.time() - start_strategy_execute
             return None
@@ -787,37 +767,6 @@ class MyStrategy:
                 nearest_target = target
                 nearest_target_distance = distance
         return nearest_target
-
-    def get_closest_enemy(self):
-        targets = []
-        for position in self.world.buildings:
-            if self.me.get_distance_to(position.x, position.y) <= self.ENEMY_CLOSE_RANGE:
-                if position.faction == self.me.faction or position.faction == Faction.NEUTRAL:
-                    continue
-                else:
-                    targets.append(position)
-        for position in self.world.wizards:
-            if self.me.get_distance_to(position.x, position.y) <= self.ENEMY_CLOSE_RANGE:
-                if position.faction == self.me.faction or position.faction == Faction.NEUTRAL:
-                    continue
-                else:
-                    targets.append(position)
-                targets.append(position)
-        for position in self.world.minions:
-            if self.me.get_distance_to(position.x, position.y) <= self.ENEMY_CLOSE_RANGE:
-                if position.faction == self.me.faction or position.faction == Faction.NEUTRAL:
-                    continue
-                else:
-                    targets.append(position)
-                targets.append(position)
-
-        if targets:
-            result = targets[0]
-            for target in targets:
-                if self.me.get_distance_to(result.x, result.y) > self.me.get_distance_to(target.x, target.y):
-                    result = target
-            return result
-        return None
 
     # ------ heuristics functions ---------------------------------------
 
@@ -1186,6 +1135,11 @@ class MyStrategy:
         bonus = [0, 0]
         distance, time_to_arrive = 0, 0
 
+        if self.strategy_steps % self.CREATE_BONUS_TICK == 0:
+            self.BONUS_EXIST = True
+            print('Bonus is created now!')
+            return True
+
         if self.lane == LaneType.TOP:
             bonus = self.BONUS_POINT_TOP
         if self.lane == LaneType.BOTTOM:
@@ -1195,25 +1149,25 @@ class MyStrategy:
             return None
 
         # get distance to travel for bonus
-        if (self.CURRENT_WAYPOINT_INDEX > 6) and (self.CURRENT_WAYPOINT_INDEX <= 12):
-            if (self.CURRENT_WAYPOINT_INDEX > 5) and (self.CURRENT_WAYPOINT_INDEX <= 9):
+        if (self.CURRENT_WAYPOINT_INDEX > 6) and (self.CURRENT_WAYPOINT_INDEX <= 14):
+            if (self.CURRENT_WAYPOINT_INDEX > 6) and (self.CURRENT_WAYPOINT_INDEX <= 9):
                 distance = self.me.get_distance_to(bonus[0], bonus[1])
 
             if self.CURRENT_WAYPOINT_INDEX > 9:
-                distance = self.me.get_distance_to(self.waypoints[9][0], self.waypoints[9][1])
+                distance = self.me.get_distance_to(self.waypoints[10][0], self.waypoints[10][1])
+                distance += math.hypot(abs(self.waypoints[9][0] - self.waypoints[10][0]),
+                                       abs(self.waypoints[9][1] - self.waypoints[10][1]))
                 distance += math.hypot(abs(self.waypoints[9][0] - self.waypoints[8][0]),
                                        abs(self.waypoints[9][1] - self.waypoints[8][1]))
                 distance += math.hypot(abs(self.waypoints[8][0] - bonus[0]),
                                        abs(self.waypoints[8][1] - bonus[1]))
             if distance > 0:
-                time_to_arrive = distance // 4
+                self.debug_distance_to_bonus = distance
+                time_to_arrive = distance // self.game.wizard_forward_speed
+                self.debug_time_to_arrive = time_to_arrive
 
-            if self.strategy_steps + time_to_arrive % 2500 == 0:
+            if (self.strategy_steps + round(time_to_arrive)) % 2506 == 0:
                 self.BONUS_EXIST = True
                 print('--------------------------------------')
                 print('BONUS, time to travel %s, distance %s' % (time_to_arrive, distance))
                 print('--------------------------------------')
-
-        else:
-            self.BONUS_EXIST = False
-

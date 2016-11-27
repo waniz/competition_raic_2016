@@ -221,10 +221,11 @@ STRATEGY v23: Round 1.2 part
   3. if I go back after bonus, run back works bad
   +4. check radius for pathfinder
   5. add pathfinder for bonus travel
-  6. 10 waypoint goes to 8 first than bonus
+  +6. 10 waypoint goes to 9 first than bonus
   +7. check all line waypoints
+  +8. freeze with rotate
 
-STRATEGY v23:
+STRATEGY v24:
   FEATURE: Li algorithm (wave algorithm) or A*
   FEATURE: Tangent movement
   FEATURE: Danger Field algorithm
