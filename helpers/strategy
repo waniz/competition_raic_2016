@@ -237,11 +237,7 @@ STRATEGY v25: Round 1.2 part
 STRATEGY v26:
   FEATURE: Li algorithm (wave algorithm) or A*
   FEATURE: Tangent movement
-  FEATURE: Danger Field algorithm
-
-  1. check if my base need help
-  2. check if we push an enemy base
-  3. monitor base HP, monitor our towers, enemy towers if in vision
-  4. move to defence
-  6. check if no enemy wizard at line, where everybody is
-  7. waypoints for defence
+  FEATURE: Danger Field algorithm (Potential fields)
+  FEATURE: NEXT TARGET (next waypoint, bonus, lane change)
+  FEATURE: Skills + updates
+  FEATURE: duel system - recommendation from telegramm
