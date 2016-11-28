@@ -218,12 +218,10 @@ STRATEGY v22: Round 1.1 part
 STRATEGY v23: Round 1.2 part
   +1. move top lines close to bonus not 300, 350 !!!
   +2. bonus check for distance not in 2350. !!!
-  3. if I go back after bonus, run back works bad
-  +4. check radius for pathfinder
-  5. add pathfinder for bonus travel
-  +6. 10 waypoint goes to 9 first than bonus
-  +7. check all line waypoints
-  +8. freeze with rotate
+  +3. check radius for pathfinder
+  +4. 10 waypoint goes to 9 first than bonus
+  +5. check all line waypoints
+  +6. freeze with rotate
 
 
 STRATEGY v24: Round 1.2 part
@@ -240,4 +238,18 @@ STRATEGY v26:
   FEATURE: Danger Field algorithm (Potential fields)
   FEATURE: NEXT TARGET (next waypoint, bonus, lane change)
   FEATURE: Skills + updates
-  FEATURE: duel system - recommendation from telegramm
+  FEATURE: BATTLE system - recommendation from telegramm
+
+  BATTLE system:
+    1. stay out of range of the others enemies
+       - distances for me and enemies
+    2. if somebody in range - attack (with priority)
+    3. pursiut the low enemy wizard
+    4. dodge from the missile
+       - can I?
+    5. stay on half-back for dodge
+    6. frostbolt /firebolt
+    7. range upgrade
+    8. check if high probability for death
+    9. check if bonus is vital, or better to soak here.
+    10. kill low hp ally minions and wizards
