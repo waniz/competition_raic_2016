@@ -138,7 +138,7 @@ class MyStrategy:
     debug_attack_target = None
 
     # game analisys parameters
-    MIN_PUSH_AMOUNT = 1
+    MIN_PUSH_AMOUNT = 2
 
     def visual_debugger(self):
         with debug.post() as dbg:
@@ -198,8 +198,6 @@ class MyStrategy:
                     self.waypoints = self.waypoints_mid
                 print('Lane is %s' % self.lane)
 
-        # self.lane = LaneType.TOP
-        # self.waypoints = self.waypoints_top
         # get all tick information:4
         units_timer = time.time()
 
@@ -226,7 +224,20 @@ class MyStrategy:
 
         # some information provider section
         if self.strategy_steps % 100 == 0:
-            self.step_info()
+
+            print('My stats: hp %s of %s, score %s, coords: x %s y %s' % (me.life, me.max_life, me.xp, round(me.x, 2), round(me.y, 2)))
+            print('Enemies: minion - %s, wizard - %s, building - %s' %
+                  (len(enemies_in_range['minion']), len(enemies_in_range['wizard']), len(enemies_in_range['building'])))
+            print('Ally: minion - %s, wizard - %s, building - %s' %
+                  (len(ally_in_range['minion']), len(ally_in_range['wizard']), len(ally_in_range['building'])))
+            print('Current strategy tick is %s, Time spent: %s' % (self.strategy_steps,
+                                                                   round(time.time() - self.bot_time, 2)))
+            print('Time bot: %s s, units profiler: %s, graph: %s, BFS: %s' % (round(self.strategy_time, 2),
+                                                                              round(self.units_profile, 2),
+                                                                              round(self.graph_profile, 2),
+                                                                              round(self.bfs_profile, 2)))
+            print('Death counter: %s Bonus counter: %s' % (self.DEATH_COUNT, self.BONUS_COUNT))
+            print('----------------')
 
         # go back at the beginning for not being stuck with the others
         if self.strategy_steps == 1:
@@ -551,6 +562,12 @@ class MyStrategy:
         self.move_ = move
         self.strategy_steps += 1
 
+        if self.strategy_steps == 1:
+            if self.respawn == self.start_positions[0] or self.respawn == self.start_positions[4]:
+                self.lane = LaneType.TOP
+            else:
+                self.lane = LaneType.BOTTOM
+
         self.check_bonus_will_exist()
 
         if self.strategy_steps - 1 + self.game.wizard_min_resurrection_delay_ticks == self.world.tick_index or \
@@ -758,22 +775,6 @@ class MyStrategy:
                 nearest_target = target
                 nearest_target_distance = distance
         return nearest_target
-
-    def step_info(self):
-        print('My stats: hp %s of %s, score %s, coords: x %s y %s' % (me.life, me.max_life, me.xp, round(me.x, 2),
-                                                                      round(me.y, 2)))
-        print('Enemies: minion - %s, wizard - %s, building - %s' %
-              (len(enemies_in_range['minion']), len(enemies_in_range['wizard']), len(enemies_in_range['building'])))
-        print('Ally: minion - %s, wizard - %s, building - %s' %
-              (len(ally_in_range['minion']), len(ally_in_range['wizard']), len(ally_in_range['building'])))
-        print('Current strategy tick is %s, Time spent: %s' % (self.strategy_steps,
-                                                               round(time.time() - self.bot_time, 2)))
-        print('Time bot: %s s, units profiler: %s, graph: %s, BFS: %s' % (round(self.strategy_time, 2),
-                                                                          round(self.units_profile, 2),
-                                                                          round(self.graph_profile, 2),
-                                                                          round(self.bfs_profile, 2)))
-        print('Death counter: %s Bonus counter: %s' % (self.DEATH_COUNT, self.BONUS_COUNT))
-        print('----------------')
 
     # ------ heuristics functions ---------------------------------------
 
@@ -1126,11 +1127,7 @@ class MyStrategy:
                 top_towers += 1
             elif tower.y > 3640:
                 bot_towers += 1
-            if tower.x == 902:
-                mid_towers += 1
 
-        if mid_towers == 0:
-            return LaneType.MIDDLE
         if top_towers == 0:
             return LaneType.TOP
         if bot_towers == 0:

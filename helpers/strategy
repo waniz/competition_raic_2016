@@ -237,8 +237,12 @@ STRATEGY v26: Complete
   +2. activate bonus collection at bot lane
 
 
-STRATEGY v27:
-  FEATURE: Li algorithm (wave algorithm) or A*
+STRATEGY v27: Complete
+  +1. bug fix
+
+
+STRATEGY v28:
+  +FEATURE: A*  - choose BFS, it is better in 10 times
   FEATURE: Tangent movement
   FEATURE: Danger Field algorithm (Potential fields)
   FEATURE: NEXT TARGET (next waypoint, bonus, lane change)
@@ -259,3 +263,6 @@ STRATEGY v27:
     9. check if bonus is vital, or better to soak here.
     10. kill low hp ally wizards
     11. activate bot line for play
+
+  Tests:
+  cur graph timing: 3333 Time bot: 38.01 s, units profiler: 3.86, graph: 30.85, BFS: 2.95
