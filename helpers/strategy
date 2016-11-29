@@ -250,12 +250,12 @@ STRATEGY v27:
        - distances for me and enemies
     2. if somebody in range - attack (with priority)
     3. pursiut the low enemy wizard
-    4. dodge from the missile
+    4. dodge from the missile and casts
        - can I?
     5. stay on half-back for dodge
     6. frostbolt /firebolt
     7. range upgrade
     8. check if high probability for death
     9. check if bonus is vital, or better to soak here.
-    10. kill low hp ally minions and wizards
+    10. kill low hp ally wizards
     11. activate bot line for play
