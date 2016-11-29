@@ -232,7 +232,12 @@ STRATEGY v25: Round 1.2 part
   +1. bug fix
 
 
-STRATEGY v26:
+STRATEGY v26: Complete
+  +1. activate bot lane
+  +2. activate bonus collection at bot lane
+
+
+STRATEGY v27:
   FEATURE: Li algorithm (wave algorithm) or A*
   FEATURE: Tangent movement
   FEATURE: Danger Field algorithm (Potential fields)
@@ -253,3 +258,4 @@ STRATEGY v26:
     8. check if high probability for death
     9. check if bonus is vital, or better to soak here.
     10. kill low hp ally minions and wizards
+    11. activate bot line for play
