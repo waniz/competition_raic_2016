@@ -60,86 +60,6 @@ class IndirectedGraph:
         return self.__adjacent.keys()
 
 
-class AStar:
-    open_set = []
-    closed_set = []
-    visited = []
-    start_node = None
-    goal_node = None
-    data_graph = None
-    parent = {}
-    cost = {}
-
-    FIXED_COST = 1
-
-    def __init__(self, start, end, data):
-        self.open_set = [start]          # reachable
-        self.closed_set = []
-        self.visited = []                # explored
-        self.start_node = start
-        self.goal_node = end
-        self.data_graph = data
-
-        for node in data.vertexes():
-            self.cost[node] = float('inf')
-        self.cost[start] = 0
-
-    def search(self):
-        while self.open_set:
-            node = self.__choose_node()
-
-            if node == self.goal_node:
-                return self.__build_path(self.goal_node)[::-1]
-
-            self.open_set.remove(node)
-            self.visited.append(node)
-
-            new_open_set = self.data_graph.adjacent_nodes(node)
-            for neighbor in new_open_set:
-                if neighbor in self.visited:
-                    continue
-                if self.cost[node] + self.FIXED_COST < self.cost[neighbor]:
-                    self.parent[neighbor] = node
-                    self.cost[neighbor] = self.cost[node] + self.FIXED_COST
-                if neighbor not in self.open_set:
-                    self.open_set.append(neighbor)
-        return None
-
-    def __choose_node(self):
-        min_cost = float('inf')
-        best_node = None
-        for node in self.open_set:
-            cost_start_to_node = self.cost[node]
-            cost_node_to_goal = self.__estimate_distance(node)
-            total_cost = cost_start_to_node + cost_node_to_goal
-
-            if min_cost > total_cost:
-                min_cost = total_cost
-                best_node = node
-        return best_node
-
-    def __estimate_distance(self, node, distance_method='manhattan'):
-        node_y, node_x = node.split('_')
-        goal_y, goal_x = self.goal_node.split('_')
-        node_x, node_y, goal_x, goal_y = int(node_x), int(node_y), int(goal_x), int(goal_y)
-
-        distance = float('inf')
-        if distance_method == 'manhattan':
-            distance = abs(node_x - goal_x) + abs(node_y - goal_y)
-        elif distance_method == 'sqrt':
-            distance = math.sqrt((node_x - goal_x) ** 2 + (node_y - goal_y) ** 2)
-        return distance
-
-    def __build_path(self, to_node):
-        path = []
-        while to_node:
-            path.append(to_node)
-            if to_node == self.start_node:
-                return path
-            to_node = self.parent[to_node]
-        return path
-
-
 class MyStrategy:
     # initials
     me = None
@@ -152,15 +72,13 @@ class MyStrategy:
     ATTACK_RANGE = 500
     ALLY_RANGE = 600
     LOW_HP_ENEMY_SWITCH = 12 * 2                # 12 - wizard_damage
-    PATH_FINDING_GRID = 35 * 6                  # 35 - wizard_radius
     PATH_FINDING_CELL_RADIUS = 36               # x2
-
     PATH_GRID_EXTEND = 200
 
     # catch me
     MOVE_LOW_HP = 0
     MINION_STAY = [1360, 6]                     # check it
-    ENEMIES_RANGE_LIMIT = [475, 450, 350, 270]  # wizard, building, fetish, orc TODO make it based on ATTACK RANGE value
+    ENEMIES_RANGE_LIMIT = [500, 490, 350, 200]  # wizard, building, fetish, orc TODO make it based on ATTACK RANGE value
     RANGE_LIMIT_ACTIVE = False
 
     # stuck defence
@@ -216,9 +134,8 @@ class MyStrategy:
     def visual_debugger(self):
         with debug.post() as dbg:
             dbg.text(self.me.x - 45, self.me.y + 35, 'x: %s, y: %s' % (round(self.me.x), round(self.me.y)), (0, 0, 0))
-            dbg.text(self.me.x - 45, self.me.y + 45, 'bonus @ %s %s, TTA: %s' % (round(self.debug_distance_to_bonus),
-                     self.BONUS_EXIST, self.debug_time_to_arrive), (0, 0, 0))
-            dbg.text()
+            dbg.text(self.me.x - 45, self.me.y + 45, 'HP: %s, Mana %s' % (self.me.life, self.me.mana), (0, 0, 0))
+            dbg.text(self.me.x - 45, self.me.y + 55, 'XP: %s, LVL %s' % (self.me.xp, self.me.level), (0, 0, 0))
 
             dbg.line(self.me.x, self.me.y, self.debug_next_milestone[0], self.debug_next_milestone[1], (0, 0, 0))
             dbg.line(self.me.x, self.me.y, self.debug_next_waypoint[0], self.debug_next_waypoint[1], (0, 0.5, 1))
@@ -262,21 +179,6 @@ class MyStrategy:
         if self.strategy_steps == 0:
             self.initialize_strategy(game, me)
         self.initialize_tick(world=world, game=game, me=me, move=move)
-
-        # choose TOP or BOT
-        if self.strategy_steps < 300:
-            return None
-        else:
-            if self.strategy_steps == 300:
-                self.lane = self.get_a_line_to_push()
-
-                if self.lane == LaneType.TOP:
-                    self.waypoints = self.waypoints_top
-                if self.lane == LaneType.BOTTOM:
-                    self.waypoints = self.waypoints_bot
-                if self.lane == LaneType.MIDDLE:
-                    self.waypoints = self.waypoints_mid
-                print('Lane is %s' % self.lane)
 
         # get all tick information:4
         units_timer = time.time()
@@ -633,6 +535,13 @@ class MyStrategy:
         self.waypoints_mid.append([map_size - 200, map_size - 3800])
 
         self.LAST_WAYPOINT_INDEX = 16
+
+        if self.respawn == self.start_positions[0] or self.respawn == self.start_positions[4] or self.respawn == self.start_positions[2]:
+            self.lane = LaneType.TOP
+            self.waypoints = self.waypoints_top
+        if self.respawn == self.start_positions[1] or self.respawn == self.start_positions[3]:
+            self.lane = LaneType.BOTTOM
+            self.waypoints = self.waypoints_bot
 
     def initialize_tick(self, world, game, me, move):
         self.world = world
