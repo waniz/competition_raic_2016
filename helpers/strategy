@@ -242,10 +242,6 @@ STRATEGY v27: Complete
 
 
 STRATEGY v28:
-  +FEATURE: A*  - choose BFS, it is better in 10 times
-  FEATURE: Tangent movement
-  FEATURE: Danger Field algorithm (Potential fields)
-  FEATURE: NEXT TARGET (next waypoint, bonus, lane change)
   FEATURE: Skills + updates
   FEATURE: BATTLE system - recommendation from telegramm
 
@@ -266,3 +262,4 @@ STRATEGY v28:
 
   Tests:
   cur graph timing: 3333 Time bot: 38.01 s, units profiler: 3.86, graph: 30.85, BFS: 2.95
+  update timing   : 3643 Time bot: 51.45 s, units profiler: 4.54, graph: 49.19, BFS: 2.69
