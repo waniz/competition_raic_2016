@@ -242,23 +242,23 @@ STRATEGY v27: Complete
 
 
 STRATEGY v28:
-  FEATURE: Skills + updates
+  +FEATURE: Skills + updates
   FEATURE: BATTLE system - recommendation from telegramm
 
   BATTLE system:
-    1. stay out of range of the others enemies
+    +1. stay out of range of the others enemies
        - distances for me and enemies
-    2. if somebody in range - attack (with priority)
+    +2. if somebody in range - attack (with priority)
     3. pursiut the low enemy wizard
     4. dodge from the missile and casts
        - can I?
     5. stay on half-back for dodge
-    6. frostbolt /firebolt
-    7. range upgrade
+    +6. frostbolt /firebolt
+    +7. range upgrade
     8. check if high probability for death
-    9. check if bonus is vital, or better to soak here.
+    +9. check if bonus is vital, or better to soak here.
     10. kill low hp ally wizards
-    11. activate bot line for play
+    +11. activate bot line for play
 
   Tests:
   cur graph timing: 3333 Time bot: 38.01 s, units profiler: 3.86, graph: 30.85, BFS: 2.95
@@ -268,6 +268,6 @@ STRATEGY v28:
   1. no def, - 1 bot
   2. strange move to mid...?? drop strategy http://russianaicup.ru/game/view/79855 time limit - set max path-grid
   3. no run back with low hp  79678
-  4. take bonus at 2550 (to muck wastes)
+  +4. take bonus at 2550 (to muck wastes)
   5. go back if goes from bonus and enemies in 8-9 waypoint, if at 7 waypoint go to mid, def mid
-  6. 
+  6.
