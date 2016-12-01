@@ -508,8 +508,7 @@ class MyStrategy:
         self.PREVIOUS_POS = [self.me.x, self.me.y]
 
     def low_hp_run_back(self):
-        if len(self.enemies_in_range['minion']) == 0 and len(self.enemies_in_range['wizard']) == 0 and \
-                        len(self.enemies_in_range['building']) == 0:
+        if len(self.enemies_in_range['minion']) == 0 and len(self.enemies_in_range['wizard']) == 0 and len(self.enemies_in_range['building']) == 0:
             if self.MOVE_LOW_HP > 0:
                 self.MOVE_LOW_HP -= 1
                 self.move_to_waypoint(self.last_waypoint())
