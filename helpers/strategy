@@ -263,3 +263,11 @@ STRATEGY v28:
   Tests:
   cur graph timing: 3333 Time bot: 38.01 s, units profiler: 3.86, graph: 30.85, BFS: 2.95
   update timing   : 3643 Time bot: 51.45 s, units profiler: 4.54, graph: 49.19, BFS: 2.69
+
+  Faults < 5:
+  1. no def, - 1 bot
+  2. strange move to mid...?? drop strategy http://russianaicup.ru/game/view/79855 time limit - set max path-grid
+  3. no run back with low hp  79678
+  4. take bonus at 2550 (to muck wastes)
+  5. go back if goes from bonus and enemies in 8-9 waypoint, if at 7 waypoint go to mid, def mid
+  6. 
