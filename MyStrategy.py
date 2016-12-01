@@ -247,6 +247,7 @@ class MyStrategy:
 
         # low hp run back
         if self.low_hp_run_back():
+
             return None
 
         # bonus collection: if nobody collects in game
@@ -529,7 +530,7 @@ class MyStrategy:
                     self.move_to_waypoint(self.last_waypoint())
                     if self.my_target:
                         self.attack_target(self.my_target)
-                    return True
+                        return True
 
     def bonus_collector(self):
         if self.BONUS_EXIST:
