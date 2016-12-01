@@ -61,10 +61,10 @@ class MyStrategy:
 
     # constants section
     LOW_HP_FACTOR = [0.7, 0.72]
-    ATTACK_RANGE = 500
+    ATTACK_RANGE = 700
     ALLY_RANGE = 600
     LOW_HP_ENEMY_SWITCH = 12 * 2                # 12 - wizard_damage
-    PATH_FINDING_CELL_RADIUS = 36               # x2
+    PATH_FINDING_CELL_RADIUS = 35               # x2
     PATH_GRID_EXTEND = 200
 
     # TPR = 1  graph: 2.79, BFS: 0.3
@@ -72,7 +72,7 @@ class MyStrategy:
     # TPR = 6  graph: 0.73, BFS: 0.05
     # TPR = 10 graph: 0.39, BFS: 0.05
     # TPR = 20
-    TIME_PATH_RECALCULATE = 6
+    TIME_PATH_RECALCULATE = 1
     TICK_OF_LAST_WAY = 0
     LAST_WAY = None
 
@@ -241,13 +241,8 @@ class MyStrategy:
         self.load_units_in_vicinity()
         self.units_profile += time.time() - units_timer
 
-        # check, if stuck
-        if self.stuck_check():
-            return None
-
         # low hp run back
         if self.low_hp_run_back():
-
             return None
 
         # bonus collection: if nobody collects in game
@@ -265,6 +260,9 @@ class MyStrategy:
         # if on the edge of range and nothing triggers
         if self.my_target:
             self.attack_target(self.my_target)
+
+        # check, if stuck
+        self.stuck_check()
 
         # nothing to do - go further + if this is beginning wait for a minion wave
         self.FIGHTING = False
@@ -365,12 +363,16 @@ class MyStrategy:
         self.move_ = move
         self.strategy_steps += 1
 
+        self.enemies_in_range = None
+        self.wizard, self.building, self.fetish, self.orc = None, None, None, None
+        self.ally_in_range = None
+
         # range limit modify if skills enabled
         self.ENEMIES_RANGE_LIMIT = [
                                     self.me.cast_range,
                                     self.me.cast_range - 10,
                                     330,
-                                    150
+                                    200
         ]
 
         self.check_bonus_will_exist()
@@ -388,6 +390,9 @@ class MyStrategy:
 
         if self.WAS_DEAD:
             lane = self.defense_need()
+            self.TICK_OF_LAST_WAY = 0
+            self.LAST_WAY = None
+            self.CURRENT_WAYPOINT_INDEX = 1
             if lane != self.lane:
                 self.lane = lane
                 if self.lane == LaneType.TOP:
@@ -541,15 +546,6 @@ class MyStrategy:
                     self.move_.action = ActionType.MAGIC_MISSILE
                     self.move_.cast_angle = self.me.get_angle_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1])
                     self.move_.min_cast_distance = 40
-                    if self.me.get_distance_to(1200, 1200) < 400 and self.strategy_steps % 2500 < 2200:
-                        if len(self.world.bonuses) > 0:
-                            self.BONUS_EXIST = True
-                        else:
-                            self.BONUS_EXIST = False
-
-                    if self.me.get_distance_to(self.BONUS_POINT_TOP[0], self.BONUS_POINT_TOP[1]) <= 55:
-                        if self.me.statuses:
-                            self.BONUS_COUNT += 1
                     return True
                 # else:
                 #     if (self.CURRENT_WAYPOINT_INDEX > 9) and (self.CURRENT_WAYPOINT_INDEX < 11):
@@ -588,15 +584,6 @@ class MyStrategy:
                     self.move_.action = ActionType.MAGIC_MISSILE
                     self.move_.cast_angle = self.me.get_angle_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1])
                     self.move_.min_cast_distance = 40
-                    if (self.me.get_distance_to(2800, 2800) < 400) and self.strategy_steps % 2500 < 2200:
-                        if self.world.bonuses:
-                            self.BONUS_EXIST = True
-                        else:
-                            self.BONUS_EXIST = False
-
-                    if self.me.get_distance_to(self.BONUS_POINT_BOT[0], self.BONUS_POINT_BOT[1]) <= 55:
-                        if self.me.statuses:
-                            self.BONUS_COUNT += 1
                     return True
                 # else:
                 #     # collect bonus if at 11 and 12 position
@@ -812,8 +799,8 @@ class MyStrategy:
 
         next_milestone = self.path_finder(waypoint=waypoint)
 
-        if self.strategy_steps % 50 == 0:
-            print('Milestone %s' % next_milestone)
+        # if self.strategy_steps % 50 == 0:
+        #     print('Milestone %s' % next_milestone)
         if next_milestone:
             self.debug_next_milestone = next_milestone
             angle = self.me.get_angle_to(next_milestone[0], next_milestone[1])
@@ -1216,6 +1203,11 @@ class MyStrategy:
         if self.lane == LaneType.MIDDLE:
             self.BONUS_EXIST = False
             return None
+
+        for bonus_ in self.world.bonuses:
+            if bonus_.x == bonus[0] and bonus_.y == bonus[1]:
+                self.BONUS_EXIST = True
+                return None
 
         # get distance to travel for bonus
         if (self.CURRENT_WAYPOINT_INDEX > 6) and (self.CURRENT_WAYPOINT_INDEX <= 14):
