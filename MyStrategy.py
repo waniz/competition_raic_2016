@@ -135,14 +135,7 @@ class MyStrategy:
 
     def visual_debugger(self):
         with debug.pre() as dbg:
-            # road on top map
-            dbg.line(100, 0, 100, 3500, (0, 0, 1))
-            dbg.line(300, 800, 300, 3500, (0, 0, 1))
-            dbg.line(300, 800, 800, 800, (0, 0, 1))
-            dbg.line(100, 800, 100, 800, (0, 0, 1))
-            dbg.line(100, 100, 3500, 100, (0, 0, 1))
-            dbg.line(800, 300, 3500, 300, (0, 0, 1))
-            dbg.line(800, 800, 800, 300, (0, 0, 1))
+            # graph visuals:
 
             for index in range(0, self.LAST_WAYPOINT_INDEX):
                 dbg.circle(self.waypoints[index][0], self.waypoints[index][1], self.WAYPOINT_RADIUS_NEW, (0.5, 0.5, 0.5))
