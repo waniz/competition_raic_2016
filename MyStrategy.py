@@ -67,7 +67,7 @@ class MyStrategy:
     PATH_FINDING_CELL_RADIUS = 35               # x2
     PATH_GRID_EXTEND = 210
 
-    TIME_PATH_RECALCULATE = 2
+    TIME_PATH_RECALCULATE = 1
     TICK_OF_LAST_WAY = 0
     LAST_WAY = None
 
@@ -81,8 +81,9 @@ class MyStrategy:
     # stuck defence
     NO_MOVE = 0
     PREVIOUS_POS = None
-    MAX_NO_MOVE = 30
+    MAX_NO_MOVE = 40
     FIGHTING = False
+    ATTACKING = False
 
     # new waypoint system
     CURRENT_WAYPOINT_INDEX = 1
@@ -231,20 +232,14 @@ class MyStrategy:
         # check, if stuck
         if self.me.x == self.PREVIOUS_POS[0] and self.me.y == self.PREVIOUS_POS[1]:
             self.NO_MOVE += 1
-            if self.NO_MOVE > 50:
+            if self.NO_MOVE > 100:
                 self.NO_MOVE = 0
 
-            if (self.NO_MOVE >= self.MAX_NO_MOVE) and (self.NO_MOVE < self.MAX_NO_MOVE * 2):
+            if (self.NO_MOVE >= self.MAX_NO_MOVE) and (self.NO_MOVE < self.MAX_NO_MOVE + self.MAX_NO_MOVE):
                 self.move_.strafe_speed = -self.game.wizard_strafe_speed
-                if my_target:
-                    self.attack_target(my_target)
-                #         return None
 
-            if self.NO_MOVE >= self.MAX_NO_MOVE * 2:
+            if self.NO_MOVE >= self.MAX_NO_MOVE + self.MAX_NO_MOVE:
                 self.move_.strafe_speed = self.game.wizard_strafe_speed
-                if my_target:
-                    self.attack_target(my_target)
-                #         return None
         else:
             self.NO_MOVE = 0
         self.PREVIOUS_POS = [self.me.x, self.me.y]
@@ -256,14 +251,12 @@ class MyStrategy:
                 self.move_to_waypoint(self.next_waypoint())
                 if my_target:
                     self.attack_target(my_target)
+                    if self.ATTACKING:
+                        return None
         else:
             if self.me.life < self.me.max_life * self.LOW_HP_FACTOR:
                 self.move_to_waypoint(self.last_waypoint())
                 return None
-
-        # bonus collection: if nobody collects in game
-        # if self.bonus_collector():
-        #     return None
 
         # range limit function
         range_timer = time.time()
@@ -283,11 +276,12 @@ class MyStrategy:
         if self.RANGE_LIMIT_ACTIVE:
             if self.me.level < 5:
                 if my_target:
-                    if self.me.remaining_cooldown_ticks_by_action[2] < 5:
-                        if self.attack_target(my_target):
+                    if self.me.remaining_cooldown_ticks_by_action[2] < 12:
+                        self.attack_target(my_target)
+                        if self.ATTACKING:
                             return None
                 # go back
-                if self.me.remaining_cooldown_ticks_by_action[2] >= 5:
+                if self.me.remaining_cooldown_ticks_by_action[2] >= 12:
                     waypoint = self.last_waypoint()
                     angle = self.me.get_angle_to(waypoint[0], waypoint[1])
                     self.move_.turn = -angle
@@ -295,11 +289,12 @@ class MyStrategy:
                     self.RANGE_LIMIT_ACTIVE = False
             else:
                 if my_target:
-                    if self.me.remaining_action_cooldown_ticks < 5:
-                        if self.attack_target(my_target):
+                    if self.me.remaining_action_cooldown_ticks < 12:
+                        self.attack_target(my_target)
+                        if self.ATTACKING:
                             return None
                 # go back
-                if self.me.remaining_action_cooldown_ticks >= 5:
+                if self.me.remaining_action_cooldown_ticks >= 12:
                     waypoint = self.last_waypoint()
                     angle = self.me.get_angle_to(waypoint[0], waypoint[1])
                     self.move_.turn = -angle
@@ -420,12 +415,13 @@ class MyStrategy:
         self.ENEMIES_RANGE_LIMIT = [
                                     self.me.cast_range - 25,
                                     self.me.cast_range - 25,
-                                    330,
+                                    360,
                                     200
         ]
 
-        # self.check_bonus_will_exist()
+        self.ATTACKING = False
 
+        # self.check_bonus_will_exist()
         if self.strategy_steps - 1 + self.game.wizard_min_resurrection_delay_ticks == self.world.tick_index:
             self.WAS_DEAD = True
             self.DEATH_COUNT += 1
@@ -472,7 +468,6 @@ class MyStrategy:
     def attack_target(self, my_target):
         attack_start = time.time()
         if my_target:
-            self.FIGHTING = True
             distance = self.me.get_distance_to(my_target.x, my_target.y)
             if distance - my_target.radius <= self.me.cast_range:
                 angle = self.me.get_angle_to(my_target.x, my_target.y)
@@ -483,9 +478,8 @@ class MyStrategy:
                             self.move_.action = ActionType.MAGIC_MISSILE
                             self.move_.cast_angle = angle
                             self.move_.min_cast_distance = distance - my_target.radius + self.game.magic_missile_radius
-
+                            self.ATTACKING = True
                             self.attack_profile += time.time() - attack_start
-                            return True
                     else:
                         if self.me.remaining_cooldown_ticks_by_action[3] == 0 and self.WIZ_TARGET:
                             self.move_.action = ActionType.FROST_BOLT
@@ -493,7 +487,7 @@ class MyStrategy:
                             self.move_.min_cast_distance = distance - my_target.radius + self.game.magic_missile_radius
 
                             self.attack_profile += time.time() - attack_start
-                            return True
+                            self.ATTACKING = True
 
                         elif self.me.remaining_cooldown_ticks_by_action[2] == 0:
                             self.move_.action = ActionType.MAGIC_MISSILE
@@ -501,12 +495,12 @@ class MyStrategy:
                             self.move_.min_cast_distance = distance - my_target.radius + self.game.magic_missile_radius
 
                             self.attack_profile += time.time() - attack_start
-                            return True
+                            self.ATTACKING = True
                 else:
                     self.attack_profile += time.time() - attack_start
             else:
                 self.attack_profile += time.time() - attack_start
-            return False
+                self.ATTACKING = False
 
     def bonus_collector(self):
         if self.BONUS_EXIST:
