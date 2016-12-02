@@ -60,19 +60,14 @@ class MyStrategy:
     move_ = None
 
     # constants section
-    LOW_HP_FACTOR = [0.7, 0.72]
-    ATTACK_RANGE = 700
+    LOW_HP_FACTOR = 0.40
+    ATTACK_RANGE = 600
     ALLY_RANGE = 600
     LOW_HP_ENEMY_SWITCH = 12 * 3                # 12 - wizard_damage
-    PATH_FINDING_CELL_RADIUS = 18               # x2
-    PATH_GRID_EXTEND = 200
+    PATH_FINDING_CELL_RADIUS = 35               # x2
+    PATH_GRID_EXTEND = 210
 
-    # TPR = 1  graph: 2.79, BFS: 0.3
-    # TPR = 3  graph: 1.29, BFS: 0.1
-    # TPR = 6  graph: 0.73, BFS: 0.05
-    # TPR = 10 graph: 0.39, BFS: 0.05
-    # TPR = 20
-    TIME_PATH_RECALCULATE = 1
+    TIME_PATH_RECALCULATE = 2
     TICK_OF_LAST_WAY = 0
     LAST_WAY = None
 
@@ -81,11 +76,12 @@ class MyStrategy:
     MINION_STAY = [1360, 6]                     # check it
     ENEMIES_RANGE_LIMIT = [500, 490, 350, 200]  # wizard, building, fetish, orc TODO make it based on ATTACK RANGE value
     RANGE_LIMIT_ACTIVE = False
+    WIZ_TARGET = False
 
     # stuck defence
     NO_MOVE = 0
     PREVIOUS_POS = None
-    MAX_NO_MOVE = 15
+    MAX_NO_MOVE = 30
     FIGHTING = False
 
     # new waypoint system
@@ -119,13 +115,6 @@ class MyStrategy:
     init_profile = 0
     attack_profile = 0
     range_profiler = 0
-    # graph profile
-    gr_1 = 0
-    gr_2 = 0
-    gr_3 = 0
-    gr_4 = 0
-    gr_5 = 0
-    new_gr = 0
 
     # debug parameters
     debug_next_milestone = [400, 3600]
@@ -143,10 +132,6 @@ class MyStrategy:
 
     # game analisys parameters
     MIN_PUSH_AMOUNT = 2
-    enemies_in_range = None
-    wizard, building, fetish, orc = None, None, None, None
-    ally_in_range = None
-    my_target = None
 
     def visual_debugger(self):
         with debug.pre() as dbg:
@@ -203,11 +188,6 @@ class MyStrategy:
                   (round(self.init_profile, 2), round(self.units_profile, 2), round(self.graph_profile, 2),
                    round(self.bfs_profile, 2), round(self.attack_profile, 2), round(self.range_profiler, 2)))
 
-            # print('gr_1: %s, gr_2: %s, gr_3: %s, gr_4: %s, gr_5: %s new_gr %s' % (
-            #     round(self.gr_1, 2), round(self.gr_2, 2),
-            #     round(self.gr_3, 2), round(self.gr_4, 2),
-            #     round(self.gr_5, 2), round(self.new_gr, 2)))
-
             print('Death counter: %s Bonus counter: %s' % (self.DEATH_COUNT, self.BONUS_COUNT))
             print('Current strategy tick is %s, current_graph %s, max graph vertex %s' % (self.strategy_steps,
                                                                                           self.debug_graph_cells,
@@ -241,66 +221,52 @@ class MyStrategy:
         enemies_in_range = self.get_enemies_in_attack_range()
         enemies = enemies_in_range
         wizard, building, fetish, orc = self.get_the_closest_of_attack_range(enemies_in_range)
-
         nearest_enemy_wizard = self.get_closest_or_with_low_hp_enemy_wizard_in_attack_range()
         tower = self.get_tower_in_range()
         if nearest_enemy_wizard:
             my_target = nearest_enemy_wizard
+            self.WIZ_TARGET = True
         elif tower:
             my_target = tower
+            self.WIZ_TARGET = False
         else:
             my_target = self.get_nearest_target_in_my_visible_range()
+            self.WIZ_TARGET = False
         self.debug_attack_target = my_target
         self.units_profile += time.time() - units_timer
 
         # check, if stuck
         if self.me.x == self.PREVIOUS_POS[0] and self.me.y == self.PREVIOUS_POS[1]:
             self.NO_MOVE += 1
-            if self.NO_MOVE > 110:
+            if self.NO_MOVE > 50:
                 self.NO_MOVE = 0
 
-            if self.NO_MOVE >= self.MAX_NO_MOVE + self.MAX_NO_MOVE:
-                print('I am stuck')
-                # self.move_.turn = self.game.wizard_max_turn_angle
+            if (self.NO_MOVE >= self.MAX_NO_MOVE) and (self.NO_MOVE < self.MAX_NO_MOVE * 2):
                 self.move_.strafe_speed = -self.game.wizard_strafe_speed
                 if my_target:
-                    if self.attack_target(my_target):
-                        return None
+                    self.attack_target(my_target)
+                #         return None
 
-            if self.NO_MOVE >= self.MAX_NO_MOVE:
-                print('I am stuck')
-                # self.move_.turn = self.game.wizard_max_turn_angle
+            if self.NO_MOVE >= self.MAX_NO_MOVE * 2:
                 self.move_.strafe_speed = self.game.wizard_strafe_speed
                 if my_target:
-                    if self.attack_target(my_target):
-                        return None
+                    self.attack_target(my_target)
+                #         return None
         else:
             self.NO_MOVE = 0
         self.PREVIOUS_POS = [self.me.x, self.me.y]
 
         # low hp run back
         if len(enemies['minion']) == 0 and len(enemies['wizard']) == 0 and len(enemies['building']) == 0:
-            if self.MOVE_LOW_HP > 0:
-                self.MOVE_LOW_HP -= 1
-                self.move_to_waypoint(self.last_waypoint())
-                if self.strategy_steps % 20 == 0:
-                    print('go back - low hp: x: %s y: %s for %s ticks' %
-                          (round(self.me.x, 1), round(self.me.y, 1), self.MOVE_LOW_HP))
+            if (self.me.life < self.me.max_life * self.LOW_HP_FACTOR + self.me.max_life * 0.1) \
+                    and (self.me.life > self.me.max_life * self.LOW_HP_FACTOR):
+                self.move_to_waypoint(self.next_waypoint())
                 if my_target:
                     self.attack_target(my_target)
-                return None
         else:
-            if self.me.life < self.me.max_life * self.LOW_HP_FACTOR[0]:
-                if self.me.life < self.me.max_life * self.LOW_HP_FACTOR[1]:
-                    if self.me.life < self.me.max_life * 0.12:
-                        print('CRITICAL HP LEVEL')
-                    self.MOVE_LOW_HP = 100
-                    if self.strategy_steps % 10 == 0:
-                        print('go back - low hp: x: %s y: % s' % (round(self.me.x, 1), round(self.me.y, 1)))
-                    self.move_to_waypoint(self.last_waypoint())
-                    if my_target:
-                        if self.attack_target(my_target):
-                            return None
+            if self.me.life < self.me.max_life * self.LOW_HP_FACTOR:
+                self.move_to_waypoint(self.last_waypoint())
+                return None
 
         # bonus collection: if nobody collects in game
         # if self.bonus_collector():
@@ -322,25 +288,36 @@ class MyStrategy:
                 self.RANGE_LIMIT_ACTIVE = True
 
         if self.RANGE_LIMIT_ACTIVE:
-            # attack if can:
-            if my_target:
-                if self.me.remaining_cooldown_ticks_by_action[2] < 5:
-                    if self.attack_target(my_target):
-                        return None
-            # go back
-            if self.me.remaining_cooldown_ticks_by_action[2] >= 5:
-                waypoint = self.last_waypoint()
-                angle = self.me.get_angle_to(waypoint[0], waypoint[1])
-                self.move_.turn = -angle
-                self.move_.speed = -self.game.wizard_backward_speed
-                self.RANGE_LIMIT_ACTIVE = False
-
+            if self.me.level < 5:
+                if my_target:
+                    if self.me.remaining_cooldown_ticks_by_action[2] < 5:
+                        if self.attack_target(my_target):
+                            return None
+                # go back
+                if self.me.remaining_cooldown_ticks_by_action[2] >= 5:
+                    waypoint = self.last_waypoint()
+                    angle = self.me.get_angle_to(waypoint[0], waypoint[1])
+                    self.move_.turn = -angle
+                    self.move_.speed = -self.game.wizard_backward_speed
+                    self.RANGE_LIMIT_ACTIVE = False
+            else:
+                if my_target:
+                    if self.me.remaining_action_cooldown_ticks < 5:
+                        if self.attack_target(my_target):
+                            return None
+                # go back
+                if self.me.remaining_action_cooldown_ticks >= 5:
+                    waypoint = self.last_waypoint()
+                    angle = self.me.get_angle_to(waypoint[0], waypoint[1])
+                    self.move_.turn = -angle
+                    self.move_.speed = -self.game.wizard_backward_speed
+                    self.RANGE_LIMIT_ACTIVE = False
             return None
         self.range_profiler += time.time() - range_timer
 
         # if on the edge of range and nothing triggers
-        if self.my_target:
-            self.attack_target(self.my_target)
+        if my_target:
+            self.attack_target(my_target)
 
         # nothing to do - go further + if this is beginning wait for a minion wave
         self.FIGHTING = False
@@ -410,8 +387,8 @@ class MyStrategy:
 
         self.waypoints_mid.append([50, map_size - 50])
         self.waypoints_mid.append([map_size - 3800, map_size - 200])
-        self.waypoints_mid.append([map_size - 3800, map_size - 800])
-        self.waypoints_mid.append([map_size - 3200, map_size - 800])
+        self.waypoints_mid.append([map_size - 3800, map_size - 700])
+        self.waypoints_mid.append([map_size - 3200, map_size - 700])
         self.waypoints_mid.append([map_size - 3000, map_size - 800])
         self.waypoints_mid.append([map_size - 2850, map_size - 1000])
         self.waypoints_mid.append([map_size - 2750, map_size - 1250])
@@ -428,13 +405,16 @@ class MyStrategy:
 
         self.LAST_WAYPOINT_INDEX = 16
 
-        if self.respawn == self.start_positions[0] or self.respawn == self.start_positions[4] or \
-                                                      self.respawn == self.start_positions[2]:
+        if self.respawn == self.start_positions[0] or self.respawn == self.start_positions[4]:
             self.lane = LaneType.TOP
             self.waypoints = self.waypoints_top
         if self.respawn == self.start_positions[1] or self.respawn == self.start_positions[3]:
             self.lane = LaneType.BOTTOM
             self.waypoints = self.waypoints_bot
+        if self.respawn == self.start_positions[2]:
+            self.MINION_STAY = [950, 6]
+            self.lane = LaneType.MIDDLE
+            self.waypoints = self.waypoints_mid
 
     def initialize_tick(self, world, game, me, move):
         self.world = world
@@ -443,30 +423,23 @@ class MyStrategy:
         self.move_ = move
         self.strategy_steps += 1
 
-        self.enemies_in_range = None
-        self.wizard, self.building, self.fetish, self.orc = None, None, None, None
-        self.ally_in_range = None
-
         # range limit modify if skills enabled
         self.ENEMIES_RANGE_LIMIT = [
-                                    self.me.cast_range,
-                                    self.me.cast_range - 10,
+                                    self.me.cast_range - 25,
+                                    self.me.cast_range - 25,
                                     330,
                                     200
         ]
 
-        self.check_bonus_will_exist()
+        # self.check_bonus_will_exist()
 
-        if self.strategy_steps - 1 + self.game.wizard_min_resurrection_delay_ticks == self.world.tick_index or \
-           self.strategy_steps - 1 != self.world.tick_index:
+        if self.strategy_steps - 1 + self.game.wizard_min_resurrection_delay_ticks == self.world.tick_index:
             self.WAS_DEAD = True
             self.DEATH_COUNT += 1
-            self.CURRENT_WAYPOINT_INDEX = 1
             self.strategy_steps = self.world.tick_index + 1
             print('--------------------------------------')
             print('I was dead %s times' % self.DEATH_COUNT)
             print('--------------------------------------')
-            self.MOVE_LOW_HP = 0
 
         if self.WAS_DEAD:
             lane = self.defense_need()
@@ -491,7 +464,6 @@ class MyStrategy:
             if self.respawn == self.start_positions[2]:
                 print('Start position #%s %s' % (2, self.respawn))
                 angle = self.me.get_angle_to(self.me.x - 100, self.me.y + 100)
-                self.MINION_STAY = [1460, 6]
             self.move_.turn = angle
             self.move_.speed = self.game.wizard_backward_speed
             return None
@@ -504,22 +476,6 @@ class MyStrategy:
                 self.move_.speed = self.game.wizard_backward_speed
                 return None
 
-    # def load_units_in_vicinity(self):
-    #     self.enemies_in_range = self.get_enemies_in_attack_range()
-    #     self.wizard, self.building, self.fetish, self.orc = self.get_the_closest_of_attack_range(self.enemies_in_range)
-    #     self.ally_in_range = self.get_ally_in_shared_exp_range()
-    #
-    #     nearest_enemy_wizard = self.get_closest_or_with_low_hp_enemy_wizard_in_attack_range()
-    #     tower = self.get_tower_in_range()
-    #     if nearest_enemy_wizard:
-    #         self.my_target = nearest_enemy_wizard
-    #     elif tower:
-    #         self.my_target = tower
-    #     else:
-    #         self.my_target = self.get_nearest_target_in_my_visible_range()
-    #
-    #     self.debug_attack_target = self.my_target
-
     def attack_target(self, my_target):
         attack_start = time.time()
         if my_target:
@@ -529,68 +485,35 @@ class MyStrategy:
                 angle = self.me.get_angle_to(my_target.x, my_target.y)
                 self.move_.turn = angle
                 if abs(angle) < self.game.staff_sector / 2:
-                    if self.me.remaining_cooldown_ticks_by_action[2] == 0:
-                        self.move_.action = ActionType.MAGIC_MISSILE
-                        self.move_.cast_angle = angle
-                        self.move_.min_cast_distance = distance - my_target.radius + self.game.magic_missile_radius
+                    if self.me.level < 10:
+                        if self.me.remaining_cooldown_ticks_by_action[2] == 0:
+                            self.move_.action = ActionType.MAGIC_MISSILE
+                            self.move_.cast_angle = angle
+                            self.move_.min_cast_distance = distance - my_target.radius + self.game.magic_missile_radius
 
-                        self.attack_profile += time.time() - attack_start
-                        return True
+                            self.attack_profile += time.time() - attack_start
+                            return True
                     else:
-                        self.attack_profile += time.time() - attack_start
+                        if self.me.remaining_cooldown_ticks_by_action[3] == 0 and self.WIZ_TARGET:
+                            self.move_.action = ActionType.FROST_BOLT
+                            self.move_.cast_angle = angle
+                            self.move_.min_cast_distance = distance - my_target.radius + self.game.magic_missile_radius
+
+                            self.attack_profile += time.time() - attack_start
+                            return True
+
+                        elif self.me.remaining_cooldown_ticks_by_action[2] == 0:
+                            self.move_.action = ActionType.MAGIC_MISSILE
+                            self.move_.cast_angle = angle
+                            self.move_.min_cast_distance = distance - my_target.radius + self.game.magic_missile_radius
+
+                            self.attack_profile += time.time() - attack_start
+                            return True
                 else:
                     self.attack_profile += time.time() - attack_start
             else:
                 self.attack_profile += time.time() - attack_start
             return False
-
-    def stuck_check(self):
-        if self.strategy_steps % 10 == 0:
-            print('in stuck_check')
-        if self.me.x == self.PREVIOUS_POS[0] and self.me.y == self.PREVIOUS_POS[1]:
-            self.NO_MOVE += 1
-            if self.NO_MOVE > 60:
-                self.NO_MOVE = 0
-
-            if self.NO_MOVE >= self.MAX_NO_MOVE * 2:
-                self.debug_message = 'I am stuck x2'
-                self.move_.strafe_speed = -self.game.wizard_strafe_speed
-                if self.my_target:
-                    if self.attack_target(self.my_target):
-                        return True
-
-            if self.NO_MOVE >= self.MAX_NO_MOVE:
-                # self.debug_message = 'I am stuck'
-                self.move_.strafe_speed = self.game.wizard_strafe_speed
-                if self.my_target:
-                    if self.attack_target(self.my_target):
-                        return True
-        else:
-            self.NO_MOVE = 0
-        self.PREVIOUS_POS = [self.me.x, self.me.y]
-
-    def low_hp_run_back(self):
-        if self.strategy_steps % 10 == 0:
-            print('in low_hp')
-        if len(self.enemies_in_range['minion']) == 0 and len(self.enemies_in_range['wizard']) == 0 and len(self.enemies_in_range['building']) == 0:
-            if self.MOVE_LOW_HP > 0:
-                self.MOVE_LOW_HP -= 1
-                self.move_to_waypoint(self.last_waypoint())
-                if self.strategy_steps % 20 == 0:
-                    self.debug_message = 'Go back - low hp %s' % self.CURRENT_WAYPOINT_INDEX
-                if self.my_target:
-                    self.attack_target(self.my_target)
-                return True
-        else:
-            if self.me.life < self.me.max_life * self.LOW_HP_FACTOR[0]:
-                if self.me.life < self.me.max_life * self.LOW_HP_FACTOR[1]:
-                    if self.me.life < self.me.max_life * 0.12:
-                        self.debug_message = 'CRITICAL HP LEVEL %s' % self.CURRENT_WAYPOINT_INDEX
-                        self.MOVE_LOW_HP = 100
-                        self.move_to_waypoint(self.last_waypoint())
-                        if self.my_target:
-                            self.attack_target(self.my_target)
-                        return True
 
     def bonus_collector(self):
         if self.BONUS_EXIST:
@@ -671,34 +594,6 @@ class MyStrategy:
                 #         self.strategy_time += time.time() - start_strategy_execute
                 #         return None
 
-    def range_limit_flag(self):
-        if self.orc:
-            if self.me.get_distance_to(self.orc.x, self.orc.y) <= self.ENEMIES_RANGE_LIMIT[3]:
-                self.RANGE_LIMIT_ACTIVE = True
-        if self.fetish:
-            if self.me.get_distance_to(self.fetish.x, self.fetish.y) <= self.ENEMIES_RANGE_LIMIT[2]:
-                self.RANGE_LIMIT_ACTIVE = True
-        if self.building:
-            if self.me.get_distance_to(self.building.x, self.building.y) <= self.ENEMIES_RANGE_LIMIT[1]:
-                self.RANGE_LIMIT_ACTIVE = True
-        if self.wizard:
-            if self.me.get_distance_to(self.wizard.x, self.wizard.y) <= self.ENEMIES_RANGE_LIMIT[0]:
-                self.RANGE_LIMIT_ACTIVE = True
-
-    def range_limit(self):
-        if self.RANGE_LIMIT_ACTIVE:
-            if self.my_target:
-                if self.me.remaining_cooldown_ticks_by_action[2] < 6:
-                    if self.attack_target(self.my_target):
-                        return True
-            if self.me.remaining_cooldown_ticks_by_action[2] >= 6:
-                waypoint = self.last_waypoint()
-                angle = self.me.get_angle_to(waypoint[0], waypoint[1])
-                self.move_.turn = -angle
-                self.move_.speed = -self.game.wizard_backward_speed
-                self.RANGE_LIMIT_ACTIVE = False
-            return True
-
     def skills(self):
         # hardcoded
         # LVL:
@@ -714,6 +609,8 @@ class MyStrategy:
         #   10= 2750
         #   11= 3300
         #   12= 3900
+        #   13= 4550
+        #   14= 5250
 
         if (self.me.xp >= 50) and (self.me.xp < 150):
             self.move_.skill_to_learn = SkillType.RANGE_BONUS_PASSIVE_1
@@ -760,8 +657,12 @@ class MyStrategy:
 
         if (self.me.xp >= 3300) and (self.me.xp < 3900):
             self.move_.skill_to_learn = SkillType.MAGICAL_DAMAGE_ABSORPTION_PASSIVE_1
-        if self.me.xp >= 3900:
+        if self.me.xp >= 3900 and (self.me.xp < 4550):
             self.move_.skill_to_learn = SkillType.MAGICAL_DAMAGE_ABSORPTION_AURA_1
+        if self.me.xp >= 4550 and (self.me.xp < 5250):
+            self.move_.skill_to_learn = SkillType.MAGICAL_DAMAGE_ABSORPTION_PASSIVE_2
+        if self.me.xp >= 5250:
+            self.move_.skill_to_learn = SkillType.MAGICAL_DAMAGE_ABSORPTION_AURA_2
 
     # ------ helpers functions ---------------------------------------
 
@@ -849,13 +750,13 @@ class MyStrategy:
 
     def move_to_waypoint(self, waypoint):
         self.debug_next_waypoint = waypoint
-        if self.strategy_steps % 25 == 0:
-            print('Waypoint %s, index %s' % (waypoint, self.CURRENT_WAYPOINT_INDEX))
+        # if self.strategy_steps % 25 == 0:
+        #     print('Waypoint %s, index %s' % (waypoint, self.CURRENT_WAYPOINT_INDEX))
 
         next_milestone = self.path_finder(waypoint=waypoint)
 
-        if self.strategy_steps % 25 == 0:
-            print('Milestone %s' % next_milestone)
+        # if self.strategy_steps % 25 == 0:
+        #     print('Milestone %s' % next_milestone)
         if next_milestone:
             self.debug_next_milestone = next_milestone
             angle = self.me.get_angle_to(next_milestone[0], next_milestone[1])
@@ -957,13 +858,11 @@ class MyStrategy:
     def path_finder(self, waypoint):
 
         # recalculate option
-
         if self.TICK_OF_LAST_WAY + self.TIME_PATH_RECALCULATE > self.strategy_steps:
             if self.LAST_WAY:
                 return self.LAST_WAY
         #
         path_forward = time.time()
-        gr_1 = time.time()
 
         start = [self.me.x, self.me.y]
         if waypoint:
@@ -990,23 +889,16 @@ class MyStrategy:
         step = self.PATH_FINDING_CELL_RADIUS
         net_2d = []
 
-        self.gr_1 += time.time() - gr_1
-        gr_2 = time.time()
-
         for net_y in range(int(path_grid[1] + step), int(path_grid[3] - step), int(step * 2)):
             line_x = []
             for net_x in range(int(path_grid[0] + step), int(path_grid[2] - step), int(step * 2)):
                 line_x.append([net_x + step, net_y + step])
             net_2d.append(line_x)
-        self.gr_2 += time.time() - gr_2
 
-        gr_3 = time.time()
         # get obstacles
         obstacles = self.get_obstacle(path_grid)
         self.debug_obstacles = obstacles
-        self.gr_3 += time.time() - gr_3
 
-        gr_4 = time.time()
         # generate grid cell names
         net_2d_name = []
         for line_v in range(0, len(net_2d)):
@@ -1014,9 +906,6 @@ class MyStrategy:
             for line_h in range(0, len(net_2d[line_v])):
                 net_2d_v.append((line_v + 1) * 100 + line_h)
             net_2d_name.append(net_2d_v)
-        self.gr_4 += time.time() - gr_4
-
-        gr_5 = time.time()
 
         # make connections between elements
         graph = IndirectedGraph()
@@ -1040,8 +929,6 @@ class MyStrategy:
                 if not self.is_obstacle_in_node(net_2d[line_v - 1][line_h - 1], obstacles, cell_radius=int(step)):
                     graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v - 1][line_h - 1])
 
-        self.gr_5 += time.time() - gr_5
-
         # convert start and finish nodes
         start_node = self.return_node(net_2d, [self.me.x, self.me.y], int(step))
         end_node = self.return_node(net_2d, waypoint, int(step))
@@ -1052,11 +939,11 @@ class MyStrategy:
             self.debug_graph_cells_max = self.debug_graph_cells
 
         if start_node is None:
-            # print('FORWARD: no start waypoint found')
+            print('FORWARD: no start waypoint found')
             return self.waypoints[self.CURRENT_WAYPOINT_INDEX]
 
         if end_node is None:
-            # print('FORWARD: no finish waypoint found')
+            print('FORWARD: no finish waypoint found')
             return self.waypoints[self.CURRENT_WAYPOINT_INDEX]
 
         bfs_start = time.time()
