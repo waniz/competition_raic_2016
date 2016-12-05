@@ -143,11 +143,11 @@ class MyStrategy:
                 dbg.text(self.waypoints[index][0], self.waypoints[index][1], '%s, x: %s, y: %s' %
                          (index, self.waypoints[index][0], self.waypoints[index][1]), (0.5, 0.5, 0.5))
 
-            if self.debug_path_grid:
-                dbg.rect(self.debug_path_grid[0], self.debug_path_grid[1], self.debug_path_grid[2],
-                         self.debug_path_grid[3], (0, 0, 1))
-                dbg.rect(self.debug_path_grid[0] + 10, self.debug_path_grid[1] + 10, self.debug_path_grid[2] - 10,
-                         self.debug_path_grid[3] - 10, (0, 0, 1))
+            # if self.debug_path_grid:
+            #     dbg.rect(self.debug_path_grid[0], self.debug_path_grid[1], self.debug_path_grid[2],
+            #              self.debug_path_grid[3], (0, 0, 1))
+            #     dbg.rect(self.debug_path_grid[0] + 10, self.debug_path_grid[1] + 10, self.debug_path_grid[2] - 10,
+            #              self.debug_path_grid[3] - 10, (0, 0, 1))
 
         with debug.post() as dbg:
             dbg.text(self.me.x - 45, self.me.y + 35, 'x: %s, y: %s' % (round(self.me.x), round(self.me.y)), (0, 0, 0))
@@ -156,6 +156,8 @@ class MyStrategy:
 
             dbg.line(self.me.x, self.me.y, self.debug_next_milestone[0], self.debug_next_milestone[1], (0, 0, 0))
             dbg.line(self.me.x, self.me.y, self.debug_next_waypoint[0], self.debug_next_waypoint[1], (0, 0.5, 1))
+
+            dbg.circle(self.me.x, self.me.y, self.me.cast_range, (0.5, 0.5, 0.54))
 
             if len(self.debug_view_path) > 2:
                 for i in range(2, len(self.debug_view_path)):
@@ -168,9 +170,6 @@ class MyStrategy:
 
             if self.debug_attack_target:
                 dbg.fill_circle(self.debug_attack_target.x, self.debug_attack_target.y, self.debug_attack_target.radius, (1, 0, 0))
-
-            if self.debug_message:
-                dbg.text(self.me.x - 45, self.me.y + 65, self.debug_message, (0, 0, 0))
 
     def print_section(self):
         if self.strategy_steps % 100 == 0:
@@ -187,10 +186,6 @@ class MyStrategy:
                                                                                           self.debug_graph_cells,
                                                                                           self.debug_graph_cells_max))
             print('')
-
-        if self.debug_message:
-            print(self.debug_message)
-            self.debug_message = None
 
     def move(self, me: Wizard, world: World, game: Game, move: Move):
 
@@ -209,9 +204,17 @@ class MyStrategy:
         # skills learning
         if self.game.skills_enabled:
             self.skills()
+        self.debug_message = 'skills'
 
         # get all tick information:
+        self.debug_message = 'units'
         units_timer = time.time()
+        enemies_in_range = None
+        enemies = None
+        wizard, building, fetish, orc = None, None, None, None
+        nearest_enemy_wizard = None
+        tower = None
+
         enemies_in_range = self.get_enemies_in_attack_range()
         enemies = enemies_in_range
         wizard, building, fetish, orc = self.get_the_closest_of_attack_range(enemies_in_range)
@@ -230,21 +233,28 @@ class MyStrategy:
         self.units_profile += time.time() - units_timer
 
         # check, if stuck
-        if self.me.x == self.PREVIOUS_POS[0] and self.me.y == self.PREVIOUS_POS[1]:
+        self.debug_message = 'stuck'
+        if round(self.me.x) == self.PREVIOUS_POS[0] and round(self.me.y) == self.PREVIOUS_POS[1]:
             self.NO_MOVE += 1
             if self.NO_MOVE > 100:
                 self.NO_MOVE = 0
 
             if (self.NO_MOVE >= self.MAX_NO_MOVE) and (self.NO_MOVE < self.MAX_NO_MOVE + self.MAX_NO_MOVE):
                 self.move_.strafe_speed = -self.game.wizard_strafe_speed
-
+                angle = self.me.get_angle_to(self.me.x - 50, self.me.y)
+                self.move_.turn = angle
+                self.move_.speed = self.game.wizard_forward_speed
             if self.NO_MOVE >= self.MAX_NO_MOVE + self.MAX_NO_MOVE:
                 self.move_.strafe_speed = self.game.wizard_strafe_speed
+                self.move_.speed = self.game.wizard_forward_speed
+                angle = self.me.get_angle_to(self.me.x + 50, self.me.y)
+                self.move_.turn = angle
         else:
             self.NO_MOVE = 0
-        self.PREVIOUS_POS = [self.me.x, self.me.y]
+        self.PREVIOUS_POS = [round(self.me.x), round(self.me.y)]
 
         # low hp run back
+        self.debug_message = 'low hp'
         if len(enemies['minion']) == 0 and len(enemies['wizard']) == 0 and len(enemies['building']) == 0:
             if (self.me.life < self.me.max_life * self.LOW_HP_FACTOR + self.me.max_life * 0.1) \
                     and (self.me.life > self.me.max_life * self.LOW_HP_FACTOR):
@@ -258,6 +268,8 @@ class MyStrategy:
                 self.move_to_waypoint(self.last_waypoint())
                 return None
 
+        self.debug_message = 'range'
+        self.RANGE_LIMIT_ACTIVE = False
         # range limit function
         range_timer = time.time()
         if orc:
@@ -303,6 +315,7 @@ class MyStrategy:
             return None
         self.range_profiler += time.time() - range_timer
 
+        self.debug_message = 'attack end'
         # if on the edge of range and nothing triggers
         if my_target:
             self.attack_target(my_target)
@@ -310,6 +323,7 @@ class MyStrategy:
         # nothing to do - go further + if this is beginning wait for a minion wave
         self.FIGHTING = False
 
+        self.debug_message = 'move'
         if self.strategy_steps > self.MINION_STAY[0]:
             self.move_to_waypoint(self.next_waypoint())
         else:
@@ -415,8 +429,8 @@ class MyStrategy:
         self.ENEMIES_RANGE_LIMIT = [
                                     self.me.cast_range - 25,
                                     self.me.cast_range - 25,
-                                    360,
-                                    200
+                                    400,
+                                    230
         ]
 
         self.ATTACKING = False
@@ -497,6 +511,7 @@ class MyStrategy:
                             self.attack_profile += time.time() - attack_start
                             self.ATTACKING = True
                 else:
+                    self.ATTACKING = False
                     self.attack_profile += time.time() - attack_start
             else:
                 self.attack_profile += time.time() - attack_start
@@ -845,9 +860,9 @@ class MyStrategy:
     def path_finder(self, waypoint):
 
         # recalculate option
-        if self.TICK_OF_LAST_WAY + self.TIME_PATH_RECALCULATE > self.strategy_steps:
-            if self.LAST_WAY:
-                return self.LAST_WAY
+        # if self.TICK_OF_LAST_WAY + self.TIME_PATH_RECALCULATE > self.strategy_steps:
+        #     if self.LAST_WAY:
+        #         return self.LAST_WAY
         #
         path_forward = time.time()
 
