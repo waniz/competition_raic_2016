@@ -270,4 +270,12 @@ STRATEGY v28:
   3. no run back with low hp  79678
   +4. take bonus at 2550 (to muck wastes)
   5. go back if goes from bonus and enemies in 8-9 waypoint, if at 7 waypoint go to mid, def mid
-  6.
+
+STRATEGY v33:
+TEST:
+          missile vs frostbolt:
+  pos 1:   2121       852
+  pos 2:   2370
+  pos 3:   1907
+  pos 4:   592?
+  pos 5:   2701       973

@@ -60,11 +60,11 @@ class MyStrategy:
     move_ = None
 
     # constants section
-    LOW_HP_FACTOR = 0.40
+    LOW_HP_FACTOR = 0.3
     ATTACK_RANGE = 600
     ALLY_RANGE = 600
     LOW_HP_ENEMY_SWITCH = 12 * 3                # 12 - wizard_damage
-    PATH_FINDING_CELL_RADIUS = 35               # x2
+    PATH_FINDING_CELL_RADIUS = 70               # x2
     PATH_GRID_EXTEND = 210
 
     TIME_PATH_RECALCULATE = 1
@@ -74,7 +74,7 @@ class MyStrategy:
     # catch me
     MOVE_LOW_HP = 0
     MINION_STAY = [1360, 6]                     # check it
-    ENEMIES_RANGE_LIMIT = [500, 490, 350, 200]  # wizard, building, fetish, orc TODO make it based on ATTACK RANGE value
+    ENEMIES_RANGE_LIMIT = [500, 450, 350, 200]  # wizard, building, fetish, orc TODO make it based on ATTACK RANGE value
     RANGE_LIMIT_ACTIVE = False
     WIZ_TARGET = False
 
@@ -204,7 +204,7 @@ class MyStrategy:
         # skills learning
         if self.game.skills_enabled:
             self.skills()
-        self.debug_message = 'skills'
+            self.debug_message = 'skills'
 
         # get all tick information:
         self.debug_message = 'units'
@@ -236,7 +236,7 @@ class MyStrategy:
         self.debug_message = 'stuck'
         if round(self.me.x) == self.PREVIOUS_POS[0] and round(self.me.y) == self.PREVIOUS_POS[1]:
             self.NO_MOVE += 1
-            if self.NO_MOVE > 100:
+            if self.NO_MOVE > 200:
                 self.NO_MOVE = 0
 
             if (self.NO_MOVE >= self.MAX_NO_MOVE) and (self.NO_MOVE < self.MAX_NO_MOVE + self.MAX_NO_MOVE):
@@ -268,50 +268,40 @@ class MyStrategy:
                 self.move_to_waypoint(self.last_waypoint())
                 return None
 
-        self.debug_message = 'range'
-        self.RANGE_LIMIT_ACTIVE = False
         # range limit function
         range_timer = time.time()
-        if orc:
-            if self.me.get_distance_to(orc.x, orc.y) <= self.ENEMIES_RANGE_LIMIT[3]:
-                self.RANGE_LIMIT_ACTIVE = True
-        if fetish:
-            if self.me.get_distance_to(fetish.x, fetish.y) <= self.ENEMIES_RANGE_LIMIT[2]:
-                self.RANGE_LIMIT_ACTIVE = True
-        if building:
-            if self.me.get_distance_to(building.x, building.y) <= self.ENEMIES_RANGE_LIMIT[1]:
-                self.RANGE_LIMIT_ACTIVE = True
+        self.debug_message = 'range'
+        self.RANGE_LIMIT_ACTIVE = False
+
         if wizard:
             if self.me.get_distance_to(wizard.x, wizard.y) <= self.ENEMIES_RANGE_LIMIT[0]:
                 self.RANGE_LIMIT_ACTIVE = True
+        if building and not self.RANGE_LIMIT_ACTIVE:
+            if self.me.get_distance_to(building.x, building.y) <= self.ENEMIES_RANGE_LIMIT[1]:
+                self.RANGE_LIMIT_ACTIVE = True
+        if fetish and not self.RANGE_LIMIT_ACTIVE:
+            if self.me.get_distance_to(fetish.x, fetish.y) <= self.ENEMIES_RANGE_LIMIT[2]:
+                self.RANGE_LIMIT_ACTIVE = True
+        if orc and not self.RANGE_LIMIT_ACTIVE:
+            if self.me.get_distance_to(orc.x, orc.y) <= self.ENEMIES_RANGE_LIMIT[3]:
+                self.RANGE_LIMIT_ACTIVE = True
 
         if self.RANGE_LIMIT_ACTIVE:
-            if self.me.level < 5:
-                if my_target:
-                    if self.me.remaining_cooldown_ticks_by_action[2] < 12:
-                        self.attack_target(my_target)
-                        if self.ATTACKING:
-                            return None
-                # go back
-                if self.me.remaining_cooldown_ticks_by_action[2] >= 12:
-                    waypoint = self.last_waypoint()
-                    angle = self.me.get_angle_to(waypoint[0], waypoint[1])
-                    self.move_.turn = -angle
-                    self.move_.speed = -self.game.wizard_backward_speed
-                    self.RANGE_LIMIT_ACTIVE = False
-            else:
-                if my_target:
-                    if self.me.remaining_action_cooldown_ticks < 12:
-                        self.attack_target(my_target)
-                        if self.ATTACKING:
-                            return None
-                # go back
-                if self.me.remaining_action_cooldown_ticks >= 12:
-                    waypoint = self.last_waypoint()
-                    angle = self.me.get_angle_to(waypoint[0], waypoint[1])
-                    self.move_.turn = -angle
-                    self.move_.speed = -self.game.wizard_backward_speed
-                    self.RANGE_LIMIT_ACTIVE = False
+            if my_target:
+                if self.me.remaining_action_cooldown_ticks < 12:
+                    self.attack_target(my_target)
+                    if self.ATTACKING:
+                        return None
+                    else:
+                        self.move_.speed = -self.game.wizard_backward_speed
+                        self.RANGE_LIMIT_ACTIVE = False
+            # go back
+            if self.me.remaining_action_cooldown_ticks >= 12:
+                waypoint = self.last_waypoint()
+                angle = self.me.get_angle_to(waypoint[0], waypoint[1])
+                self.move_.turn = -angle
+                self.move_.speed = -self.game.wizard_backward_speed
+                self.RANGE_LIMIT_ACTIVE = False
             return None
         self.range_profiler += time.time() - range_timer
 
@@ -427,9 +417,9 @@ class MyStrategy:
 
         # range limit modify if skills enabled
         self.ENEMIES_RANGE_LIMIT = [
-                                    self.me.cast_range - 25,
-                                    self.me.cast_range - 25,
-                                    400,
+                                    self.me.cast_range,
+                                    self.me.cast_range - 110,
+                                    370,
                                     230
         ]
 
@@ -480,12 +470,13 @@ class MyStrategy:
                 return None
 
     def attack_target(self, my_target):
+        self.ATTACKING = False
         attack_start = time.time()
         if my_target:
             distance = self.me.get_distance_to(my_target.x, my_target.y)
+            angle = self.me.get_angle_to(my_target.x, my_target.y)
+            self.move_.turn = angle
             if distance - my_target.radius <= self.me.cast_range:
-                angle = self.me.get_angle_to(my_target.x, my_target.y)
-                self.move_.turn = angle
                 if abs(angle) < self.game.staff_sector / 2:
                     if self.me.level < 10:
                         if self.me.remaining_cooldown_ticks_by_action[2] == 0:
@@ -755,7 +746,7 @@ class MyStrategy:
         # if self.strategy_steps % 25 == 0:
         #     print('Waypoint %s, index %s' % (waypoint, self.CURRENT_WAYPOINT_INDEX))
 
-        next_milestone = self.path_finder(waypoint=waypoint)
+        next_milestone = self.new_path_finder(waypoint=waypoint)
 
         # if self.strategy_steps % 25 == 0:
         #     print('Milestone %s' % next_milestone)
@@ -857,14 +848,16 @@ class MyStrategy:
                     obstacles.append(target)
         return obstacles
 
-    def path_finder(self, waypoint):
+    def obstacle_in_node(self, target_cell, obstacles):
+        for obstacle in obstacles:
+            squared_dist = (target_cell[0] - obstacle.x) ** 2 + (target_cell[1] - obstacle.y) ** 2
+            if (squared_dist + (obstacle.radius ** 2)) <= 1.5 * (self.PATH_FINDING_CELL_RADIUS ** 2):
+                return True
+        return False
 
-        # recalculate option
-        # if self.TICK_OF_LAST_WAY + self.TIME_PATH_RECALCULATE > self.strategy_steps:
-        #     if self.LAST_WAY:
-        #         return self.LAST_WAY
-        #
+    def new_path_finder(self, waypoint):
         path_forward = time.time()
+        path_grid = []
 
         start = [self.me.x, self.me.y]
         if waypoint:
@@ -872,7 +865,119 @@ class MyStrategy:
         else:
             finish = self.waypoints[self.CURRENT_WAYPOINT_INDEX]
 
+        path_grid.append(min(start[0], finish[0]) - self.PATH_GRID_EXTEND)
+        path_grid.append(min(start[1], finish[1]) - self.PATH_GRID_EXTEND)
+        path_grid.append(max(start[0], finish[0]) + self.PATH_GRID_EXTEND)
+        path_grid.append(max(start[1], finish[1]) + self.PATH_GRID_EXTEND)
+
+        if path_grid[0] <= 0:
+            path_grid[0] = 1
+        if path_grid[1] <= 0:
+            path_grid[1] = 1
+        if path_grid[2] >= 4000:
+            path_grid[2] = 3999
+        if path_grid[3] >= 4000:
+            path_grid[3] = 3999
+
+        self.debug_path_grid = path_grid
+        step = self.PATH_FINDING_CELL_RADIUS
+
+        obstacles = self.get_obstacle(path_grid)
+        self.debug_obstacles = obstacles
+
+        graph = IndirectedGraph()
+        start_node, end_node = None, None
+        for y_line in range(int(path_grid[1] + step + step // 2), int(path_grid[3] - step // 2), step * 2):
+            for x_line in range(int(path_grid[0] + step + step // 2), int(path_grid[2] - step // 2), step * 2):
+
+                if not self.obstacle_in_node([x_line, y_line], obstacles=obstacles):
+                    if (self.me.x < x_line + step) and (self.me.x >= x_line - step) and \
+                            (self.me.y < y_line + step) and (self.me.y >= y_line - step):
+                        start_node = '%s_%s' % (x_line, y_line)
+                    if (waypoint[0] < x_line + step) and (waypoint[0] >= x_line - step) and \
+                            (waypoint[1] < y_line + step) and (waypoint[1] >= y_line - step):
+                        end_node = '%s_%s' % (x_line, y_line)
+
+                    node_1 = '%s_%s' % (x_line, y_line)
+                    # node_2 = '%s_%s' % (x_line - step, y_line - step)
+                    # graph.add_connection(node_1, node_2)
+                    node_2 = '%s_%s' % (x_line, y_line - step)
+                    graph.add_connection(node_1, node_2)
+                    # node_2 = '%s_%s' % (x_line + step, y_line - step)
+                    # graph.add_connection(node_1, node_2)
+                    node_2 = '%s_%s' % (x_line - step, y_line)
+                    graph.add_connection(node_1, node_2)
+                    node_2 = '%s_%s' % (x_line + step, y_line)
+                    graph.add_connection(node_1, node_2)
+                    # node_2 = '%s_%s' % (x_line - step, y_line + step)
+                    # graph.add_connection(node_1, node_2)
+                    node_2 = '%s_%s' % (x_line, y_line + step)
+                    graph.add_connection(node_1, node_2)
+                    # node_2 = '%s_%s' % (x_line + step, y_line + step)
+                    # graph.add_connection(node_1, node_2)
+
+        for y_line in range(int(path_grid[1] + step // 2), int(path_grid[3] - step // 2), step * 2):
+            for x_line in range(int(path_grid[0] + step + step // 2), int(path_grid[2] - step // 2), step * 2):
+                if not self.obstacle_in_node([x_line, y_line], obstacles=obstacles):
+                    node_1 = '%s_%s' % (x_line, y_line)
+                    node_2 = '%s_%s' % (x_line - step, y_line)
+                    graph.add_connection(node_1, node_2)
+                    node_2 = '%s_%s' % (x_line + step, y_line)
+                    graph.add_connection(node_1, node_2)
+
+        for y_line in range(int(path_grid[1] + step + step // 2), int(path_grid[3] - step // 2), step * 2):
+            for x_line in range(int(path_grid[0] + step // 2), int(path_grid[2] - step // 2), step * 2):
+                if not self.obstacle_in_node([x_line, y_line], obstacles=obstacles):
+                    node_1 = '%s_%s' % (x_line, y_line)
+                    node_2 = '%s_%s' % (x_line, y_line - step)
+                    graph.add_connection(node_1, node_2)
+                    node_2 = '%s_%s' % (x_line, y_line + step)
+                    graph.add_connection(node_1, node_2)
+
+        self.graph_profile += time.time() - path_forward
+
+        if start_node is None:
+            # print('FORWARD: no start waypoint found')
+            return self.waypoints[self.CURRENT_WAYPOINT_INDEX]
+
+        if end_node is None:
+            # print('FORWARD: no finish waypoint found')
+            return self.waypoints[self.CURRENT_WAYPOINT_INDEX]
+
+        bfs_start = time.time()
+        # print([self.me.x, self.me.y], waypoint)
+        # print(start_node, end_node)
+        # print(graph.vertexes())
+        next_path = self.bfs(graph_to_search=graph, start=start_node, end=end_node)
+        self.bfs_profile += time.time() - bfs_start
+
+        if next_path:
+            if len(next_path) > 1:
+                next_node = next_path[1].split('_')
+                next_node = [int(next_node[0]), int(next_node[1])]
+                self.LAST_WAY = next_node
+                self.TICK_OF_LAST_WAY = self.strategy_steps
+
+                self.debug_view_path = []
+                for element in next_path:
+                    element = element.split('_')
+                    element = [int(element[0]), int(element[1])]
+                    self.debug_view_path.append(element)
+                return next_node
+            else:
+                return waypoint
+
+    def path_finder(self, waypoint):
+
+        path_forward = time.time()
         path_grid = []
+
+        start = [self.me.x, self.me.y]
+        if waypoint:
+            finish = [waypoint[0], waypoint[1]]
+        else:
+            finish = self.waypoints[self.CURRENT_WAYPOINT_INDEX]
+
         path_grid.append(min(start[0], finish[0]) - self.PATH_GRID_EXTEND)
         path_grid.append(min(start[1], finish[1]) - self.PATH_GRID_EXTEND)
         path_grid.append(max(start[0], finish[0]) + self.PATH_GRID_EXTEND)
@@ -921,15 +1026,15 @@ class MyStrategy:
                 if not self.is_obstacle_in_node(net_2d[line_v + 1][line_h], obstacles, cell_radius=int(step)):
                     graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v + 1][line_h])
 
-        for line_v in range(0, len(net_2d) - 1):
-            for line_h in range(0, len(net_2d[line_v]) - 1):
-                if not self.is_obstacle_in_node(net_2d[line_v + 1][line_h + 1], obstacles, cell_radius=int(step)):
-                    graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v + 1][line_h + 1])
-
-        for line_v in range(len(net_2d) - 1, 1, -1):
-            for line_h in range(len(net_2d[line_v]) - 1, 1, -1):
-                if not self.is_obstacle_in_node(net_2d[line_v - 1][line_h - 1], obstacles, cell_radius=int(step)):
-                    graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v - 1][line_h - 1])
+        # for line_v in range(0, len(net_2d) - 1):
+        #     for line_h in range(0, len(net_2d[line_v]) - 1):
+        #         if not self.is_obstacle_in_node(net_2d[line_v + 1][line_h + 1], obstacles, cell_radius=int(step)):
+        #             graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v + 1][line_h + 1])
+        #
+        # for line_v in range(len(net_2d) - 1, 1, -1):
+        #     for line_h in range(len(net_2d[line_v]) - 1, 1, -1):
+        #         if not self.is_obstacle_in_node(net_2d[line_v - 1][line_h - 1], obstacles, cell_radius=int(step)):
+        #             graph.add_connection(net_2d_name[line_v][line_h], net_2d_name[line_v - 1][line_h - 1])
 
         # convert start and finish nodes
         start_node = self.return_node(net_2d, [self.me.x, self.me.y], int(step))
