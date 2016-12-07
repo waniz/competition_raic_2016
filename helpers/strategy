@@ -286,7 +286,13 @@ STRATEGY v34:
   +1. target choose more wisely
 
 
-  suggestions for v35 build:
+STRATEGY v35:
+  +1. fixed waypoint 8
+  +2. fixed freezes because of range limit bug
+  +3. some tiny features for range limit
+
+
+  suggestions for v36 build:
   FEATURE: Potential Fields for visible range
   FEATURE: bonus collection at 7-9 waypoint check if profit
   FEATURE: dodge
