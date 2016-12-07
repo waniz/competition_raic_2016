@@ -156,7 +156,7 @@ class MyStrategy:
     # new waypoint system
     CURRENT_WAYPOINT_INDEX = 1
     LAST_WAYPOINT_INDEX = 0
-    WAYPOINT_RADIUS_NEW = 85
+    WAYPOINT_RADIUS_NEW = 84
     WAS_DEAD = True
     DEATH_COUNT = 0
 
@@ -210,12 +210,6 @@ class MyStrategy:
                 dbg.circle(self.waypoints[index][0], self.waypoints[index][1], self.WAYPOINT_RADIUS_NEW, (0.5, 0.5, 0.5))
                 dbg.text(self.waypoints[index][0], self.waypoints[index][1], '%s, x: %s, y: %s' %
                          (index, self.waypoints[index][0], self.waypoints[index][1]), (0.5, 0.5, 0.5))
-
-            # if self.debug_path_grid:
-            #     dbg.rect(self.debug_path_grid[0], self.debug_path_grid[1], self.debug_path_grid[2],
-            #              self.debug_path_grid[3], (0, 0, 1))
-            #     dbg.rect(self.debug_path_grid[0] + 10, self.debug_path_grid[1] + 10, self.debug_path_grid[2] - 10,
-            #              self.debug_path_grid[3] - 10, (0, 0, 1))
 
         with debug.post() as dbg:
             dbg.text(self.me.x - 45, self.me.y + 35, 'x: %s, y: %s' % (round(self.me.x), round(self.me.y)), (0, 0, 0))
@@ -366,15 +360,15 @@ class MyStrategy:
                         if self.ATTACKING:
                             return None
                         else:
-                            self.move_.speed = -self.game.wizard_backward_speed
+                            self.move_.speed = -self.game.wizard_backward_speed / 1.5
                             self.RANGE_LIMIT_ACTIVE = False
                 # go back
-                waypoint = self.last_waypoint()
-                angle = self.me.get_angle_to(waypoint[0], waypoint[1])
-                self.move_.turn = -angle
-                self.move_.speed = -self.game.wizard_backward_speed
-                self.RANGE_LIMIT_ACTIVE = False
-                return None
+                    if self.me.remaining_action_cooldown_ticks > 14:
+                        waypoint = self.last_waypoint()
+                        angle = self.me.get_angle_to(waypoint[0], waypoint[1])
+                        self.move_.turn = -angle
+                        self.move_.speed = -self.game.wizard_backward_speed
+                        self.RANGE_LIMIT_ACTIVE = False
             else:
                 if my_target:
                     if self.me.remaining_cooldown_ticks_by_action[2] <= 15:
@@ -382,17 +376,16 @@ class MyStrategy:
                         if self.ATTACKING:
                             return None
                         else:
-                            self.move_.speed = -self.game.wizard_backward_speed
+                            self.move_.speed = -self.game.wizard_backward_speed / 1.5
                             self.RANGE_LIMIT_ACTIVE = False
-                            return None
-                # go back
-                if self.me.remaining_cooldown_ticks_by_action[2] > 15:
-                    waypoint = self.last_waypoint()
-                    angle = self.me.get_angle_to(waypoint[0], waypoint[1])
-                    self.move_.turn = -angle
-                    self.move_.speed = -self.game.wizard_backward_speed
-                    self.RANGE_LIMIT_ACTIVE = False
-                    return None
+                    # go back
+                    if self.me.remaining_cooldown_ticks_by_action[2] > 15:
+                        waypoint = self.last_waypoint()
+                        angle = self.me.get_angle_to(waypoint[0], waypoint[1])
+                        self.move_.turn = -angle
+                        self.move_.speed = -self.game.wizard_backward_speed
+                        self.RANGE_LIMIT_ACTIVE = False
+            return None
         self.range_profiler += time.time() - range_timer
 
         self.debug_message = 'attack end'
