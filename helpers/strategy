@@ -318,7 +318,15 @@ STRATEGY v34:
 
     look at:
     1. http://russianaicup.ru/game/view/106393
+        - ++bad waypoint 8
+        - freezes in movement with no action
+        - deaths > 3
+        - ++t1 at top stuck at beginning
     2. http://russianaicup.ru/game/view/105528
+        - ++t1 at top stuck at beginning
+        - check if with skills and without skill correct delay for <12 missile works
+        -
+        -
     3. http://russianaicup.ru/game/view/104872
     4. http://russianaicup.ru/game/view/104591
     5. http://russianaicup.ru/game/view/104458
