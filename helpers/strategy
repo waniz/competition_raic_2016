@@ -292,7 +292,11 @@ STRATEGY v35:
   +3. some tiny features for range limit
 
 
-  suggestions for v36 build:
+STRATEGY v36:
+  +1. to much rotating fix
+
+
+  suggestions for v37 build:
   FEATURE: Potential Fields for visible range
   FEATURE: bonus collection at 7-9 waypoint check if profit
   FEATURE: dodge

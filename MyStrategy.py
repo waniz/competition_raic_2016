@@ -149,7 +149,7 @@ class MyStrategy:
     # stuck defence
     NO_MOVE = 0
     PREVIOUS_POS = None
-    MAX_NO_MOVE = 30
+    MAX_NO_MOVE = 20
     FIGHTING = False
     ATTACKING = False
 
@@ -244,9 +244,7 @@ class MyStrategy:
                    round(self.bfs_profile, 2), round(self.attack_profile, 2), round(self.range_profiler, 2)))
 
             print('Death counter: %s Bonus counter: %s' % (self.DEATH_COUNT, self.BONUS_COUNT))
-            print('Current strategy tick is %s, current_graph %s, max graph vertex %s' % (self.strategy_steps,
-                                                                                          self.debug_graph_cells,
-                                                                                          self.debug_graph_cells_max))
+            print('Current strategy tick is %s' % self.strategy_steps)
             print('')
 
     def move(self, me: Wizard, world: World, game: Game, move: Move):
@@ -302,7 +300,7 @@ class MyStrategy:
         self.debug_message = 'stuck'
         if round(self.me.x) == self.PREVIOUS_POS[0] and round(self.me.y) == self.PREVIOUS_POS[1]:
             self.NO_MOVE += 1
-            if self.NO_MOVE > 160:
+            if self.NO_MOVE > 60:
                 self.NO_MOVE = 0
 
             if (self.NO_MOVE >= self.MAX_NO_MOVE) and (self.NO_MOVE < (self.MAX_NO_MOVE + self.MAX_NO_MOVE)):
