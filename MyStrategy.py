@@ -52,6 +52,78 @@ class IndirectedGraph:
         return self.__adjacent.keys()
 
 
+class PotentialFields:
+    """
+    return:
+        'next waypoint' - activate pathfinder for A* to next waypoint
+        'attack target' - attack
+        'move coordinates' - move to
+        'attack and move' - attack and move
+    """
+
+    """Constant section starts"""
+
+    GRID_CELL_RADIUS = 10
+    GRID_BORDER = 800
+
+    """Constant section ends"""
+
+    field = {}
+    grid = None
+    player = None
+    world = None
+    game = None
+
+    wizards = []
+    minions = []
+    projectiles = []
+    bonuses = []
+    buildings = []
+    trees = []
+
+    def __init__(self, me, world_, game_):
+        self.player = me
+        self.world = world_
+        self.game = game_
+        self.graph = IndirectedGraph()
+
+    def __create_grid_visible_vicinity(self):
+
+        self.grid = [self.player.x - self.GRID_BORDER, self.player.y - self.GRID_BORDER,
+                     self.player.x + self.GRID_BORDER, self.player.y + self.GRID_BORDER]
+
+        if self.grid[0] <= 1:
+            self.grid[0] = 2
+        if self.grid[1] <= 1:
+            self.grid[1] = 2
+        if self.grid[2] >= 3999:
+            self.grid[2] = 3998
+        if self.grid[3] >= 3999:
+            self.grid[3] = 3998
+
+    def __get_all_objects(self):
+        for tree in self.world.trees:
+            if self.player.get_distance_to(tree.x, tree.y) < self.GRID_BORDER:
+                self.trees.append(tree)
+        for bonus in self.world.bonuses:
+            self.bonuses.append(bonus)
+        for building in self.world.buildings:
+            if self.player.get_distance_to(building.x, building.y) < self.GRID_BORDER:
+                self.buildings.append(building)
+        for projectile in self.world.projectiles:
+            if self.player.get_distance_to(projectile.x, projectile.y) < self.GRID_BORDER:
+                self.projectiles.append(projectile)
+        for minion in self.world.minions:
+            if self.player.get_distance_to(minion.x, minion.y) < self.GRID_BORDER:
+                self.minions.append(minion)
+        for wizard in self.world.wizards:
+            if wizard.x == self.player.x and wizard.y == self.player.y:
+                continue
+            if self.player.get_distance_to(wizard.x, wizard.y) < self.GRID_BORDER:
+                self.wizards.append(wizard)
+
+
+
 class MyStrategy:
     # initials
     me = None
@@ -201,6 +273,8 @@ class MyStrategy:
         if debug:
             self.visual_debugger()
             self.print_section()
+            # add potential fields in visible range for decisions
+
 
         # skills learning
         if self.game.skills_enabled:

@@ -282,7 +282,11 @@ TEST:
   pos 5:   2701       973
 
 
-  suggestions for v34 build:
+STRATEGY v34:
+  +1. target choose more wisely
+
+
+  suggestions for v35 build:
   FEATURE: Potential Fields for visible range
   FEATURE: bonus collection at 7-9 waypoint check if profit
   FEATURE: dodge
@@ -293,8 +297,7 @@ TEST:
     - evade
 
     1. check negative balance games
-    +2. test against top60
-    +3. target selection
+    2. stay in radius of exp obtaining if tower / base hp < 10%
 
   Games (skills active) against top60-70:
   games  -  12;
@@ -312,3 +315,16 @@ TEST:
           previous knowledge => information gather => Navigation (IM) or Micromanagement (Target selector / Orbwalker) => PA
       case-based reasoning (CBR) system
       Hagelbäck and Johansson 2008a
+
+    look at:
+    1. http://russianaicup.ru/game/view/106393
+    2. http://russianaicup.ru/game/view/105528
+    3. http://russianaicup.ru/game/view/104872
+    4. http://russianaicup.ru/game/view/104591
+    5. http://russianaicup.ru/game/view/104458
+    6. http://russianaicup.ru/game/view/103888
+    7. http://russianaicup.ru/game/view/103404
+    8. http://russianaicup.ru/game/view/103195
+    9. http://russianaicup.ru/game/view/102418
+    10. http://russianaicup.ru/game/view/102044
+    11. http://russianaicup.ru/game/view/101827
