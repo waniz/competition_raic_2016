@@ -271,6 +271,7 @@ STRATEGY v28:
   +4. take bonus at 2550 (to muck wastes)
   5. go back if goes from bonus and enemies in 8-9 waypoint, if at 7 waypoint go to mid, def mid
 
+
 STRATEGY v33:
 TEST:
           missile vs frostbolt:
@@ -279,3 +280,35 @@ TEST:
   pos 3:   1907
   pos 4:   592?
   pos 5:   2701       973
+
+
+  suggestions for v34 build:
+  FEATURE: Potential Fields for visible range
+  FEATURE: bonus collection at 7-9 waypoint check if profit
+  FEATURE: dodge
+    - scan projectiles to me every tick
+    - check if collision with me
+    - do I have time to evade
+    - can I move left or right for min 40 px
+    - evade
+
+    1. check negative balance games
+    +2. test against top60
+    +3. target selection
+
+  Games (skills active) against top60-70:
+  games  -  12;
+  points - 79; mean = 6.6 place = 4.4
+
+  Notes:
+    dynamic features      : heroes, minions, creeps,
+    semi-dynamic features : tower
+    static features       : terrain
+
+    heterogeneous agent architecture:
+      - navigation
+      - micromanagement
+          scheme:
+          previous knowledge => information gather => Navigation (IM) or Micromanagement (Target selector / Orbwalker) => PA
+      case-based reasoning (CBR) system
+      Hagelbäck and Johansson 2008a

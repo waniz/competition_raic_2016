@@ -64,6 +64,7 @@ class MyStrategy:
     ATTACK_RANGE = 600
     ALLY_RANGE = 600
     LOW_HP_ENEMY_SWITCH = 12 * 3                # 12 - wizard_damage
+    LOW_HP_MINION_SWITCH = 12 * 2
     PATH_FINDING_CELL_RADIUS = 70               # x2
     PATH_GRID_EXTEND = 210
 
@@ -209,6 +210,8 @@ class MyStrategy:
         # get all tick information:
         self.debug_message = 'units'
         units_timer = time.time()
+
+        # remove stuck if the values were saved in preceding ticks...
         enemies_in_range = None
         enemies = None
         wizard, building, fetish, orc = None, None, None, None
@@ -220,6 +223,7 @@ class MyStrategy:
         wizard, building, fetish, orc = self.get_the_closest_of_attack_range(enemies_in_range)
         nearest_enemy_wizard = self.get_closest_or_with_low_hp_enemy_wizard_in_attack_range()
         tower = self.get_tower_in_range()
+
         if nearest_enemy_wizard:
             my_target = nearest_enemy_wizard
             self.WIZ_TARGET = True
@@ -422,6 +426,17 @@ class MyStrategy:
                                     370,
                                     230
         ]
+
+        self.LOW_HP_MINION_SWITCH = 24
+        if self.me.level > 5:
+            if self.me.level == 6:
+                self.LOW_HP_MINION_SWITCH = 26
+            if self.me.level == 7:
+                self.LOW_HP_MINION_SWITCH = 28
+            if self.me.level == 8:
+                self.LOW_HP_MINION_SWITCH = 30
+            if self.me.level == 9:
+                self.LOW_HP_MINION_SWITCH = 32
 
         self.ATTACKING = False
 
@@ -812,11 +827,16 @@ class MyStrategy:
             targets.append(position)
 
         nearest_target = None
-        nearest_target_distance = 700
+        nearest_target_distance = self.me.cast_range
         for target in targets:
             if target.faction == Faction.NEUTRAL or target.faction == self.me.faction:
                 continue
+
+            if target.life <= self.LOW_HP_MINION_SWITCH:
+                return target
+
             distance = self.me.get_distance_to(target.x, target.y)
+
             if distance < nearest_target_distance:
                 nearest_target = target
                 nearest_target_distance = distance
