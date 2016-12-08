@@ -149,7 +149,7 @@ class MyStrategy:
     # stuck defence
     NO_MOVE = 0
     PREVIOUS_POS = None
-    MAX_NO_MOVE = 20
+    MAX_NO_MOVE = 40
     FIGHTING = False
     ATTACKING = False
 
@@ -300,17 +300,17 @@ class MyStrategy:
         self.debug_message = 'stuck'
         if round(self.me.x) == self.PREVIOUS_POS[0] and round(self.me.y) == self.PREVIOUS_POS[1]:
             self.NO_MOVE += 1
-            if self.NO_MOVE > 60:
+            if self.NO_MOVE > 120:
                 self.NO_MOVE = 0
 
             if (self.NO_MOVE >= self.MAX_NO_MOVE) and (self.NO_MOVE < (self.MAX_NO_MOVE + self.MAX_NO_MOVE)):
                 self.move_.strafe_speed = -self.game.wizard_strafe_speed
                 angle = self.me.get_angle_to(self.me.x - 70, self.me.y)
                 self.move_.turn = angle
-                # self.move_.speed = self.game.wizard_forward_speed
+                self.move_.speed = self.game.wizard_forward_speed
             if self.NO_MOVE >= (self.MAX_NO_MOVE + self.MAX_NO_MOVE):
                 self.move_.strafe_speed = self.game.wizard_strafe_speed
-                # self.move_.speed = self.game.wizard_forward_speed
+                self.move_.speed = self.game.wizard_forward_speed
                 angle = self.me.get_angle_to(self.me.x + 70, self.me.y)
                 self.move_.turn = angle
         else:
@@ -358,7 +358,7 @@ class MyStrategy:
                         if self.ATTACKING:
                             return None
                         else:
-                            self.move_.speed = -self.game.wizard_backward_speed / 1.5
+                            self.move_.speed = -self.game.wizard_backward_speed
                             self.RANGE_LIMIT_ACTIVE = False
                 # go back
                     if self.me.remaining_action_cooldown_ticks > 14:
@@ -369,15 +369,15 @@ class MyStrategy:
                         self.RANGE_LIMIT_ACTIVE = False
             else:
                 if my_target:
-                    if self.me.remaining_cooldown_ticks_by_action[2] <= 15:
+                    if self.me.remaining_cooldown_ticks_by_action[2] <= 14:
                         self.attack_target(my_target)
                         if self.ATTACKING:
                             return None
                         else:
-                            self.move_.speed = -self.game.wizard_backward_speed / 1.5
+                            self.move_.speed = -self.game.wizard_backward_speed
                             self.RANGE_LIMIT_ACTIVE = False
                     # go back
-                    if self.me.remaining_cooldown_ticks_by_action[2] > 15:
+                    if self.me.remaining_cooldown_ticks_by_action[2] > 14:
                         waypoint = self.last_waypoint()
                         angle = self.me.get_angle_to(waypoint[0], waypoint[1])
                         self.move_.turn = -angle
